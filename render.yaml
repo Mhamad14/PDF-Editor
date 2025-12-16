@@ -3,7 +3,8 @@ services:
     name: pdf-editor
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 app:app
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --timeout 120 --preload app:app
+    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0

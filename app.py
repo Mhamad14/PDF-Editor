@@ -7,6 +7,10 @@ import base64
 
 app = Flask(__name__)
 
+@app.route('/health')
+def health():
+    return 'OK', 200
+
 @app.route('/render_page', methods=['POST'])
 def render_page():
     if 'pdf_file' not in request.files:
