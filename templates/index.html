@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Editor Professional</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #e0e7ff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e1e2f 0%, #14143c 100%);
+            color: #fff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .ambient {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(79, 70, 229, 0.3) 0%, rgba(0, 0, 0, 0) 70%);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: -1;
+            filter: blur(50px);
+        }
+
+        .container {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        h1 {
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 2rem;
+            letter-spacing: -0.5px;
+            background: linear-gradient(90deg, #fff, #a5b4fc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #c7d2fe;
+        }
+
+        input[type="text"],
+        textarea,
+        input[type="file"],
+        input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        input[type="number"]:focus {
+            outline: none;
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #818cf8;
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        input[type="file"]::file-selector-button {
+            margin-right: 15px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        input[type="file"]::file-selector-button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -5px rgba(79, 70, 229, 0.5);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .save-btn {
+            background: #10b981 !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="ambient"></div>
+    <div class="container">
+        <h1>PDF Editor</h1>
+        <form action="/" method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="pdf_file">Upload Document</label>
+                <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" required>
+            </div>
+
+            <div class="form-group">
+                <label for="top_name">Top Name / Description</label>
+                <textarea name="top_name" id="top_name" placeholder="Enter main content here..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="second_section">Valid Date Range</label>
+                <input type="text" name="second_section" id="second_section"
+                    placeholder="e.g. 15-12-2025 til 19-12-2025">
+            </div>
+
+            <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <button type="submit" name="action" value="preview"
+                    style="background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);">Preview Changes</button>
+                <button type="submit" name="action" value="download">Download PDF</button>
+            </div>
+
+            {% if preview_image %}
+            <div style="margin-top: 2rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                <h3 style="margin-top: 0; color: #fff;">Effect Preview</h3>
+                <img src="data:image/png;base64,{{ preview_image }}" style="max-width: 100%; border: 1px solid #fff;">
+            </div>
+            {% endif %}
+
+            <div style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                <summary style="cursor: pointer; color: #a5b4fc; font-weight: 600;">Interactive Calibration</summary>
+                <p style="font-size: 0.8rem; color: #c7d2fe; margin-bottom: 1rem;">1. Upload File. 2. Select Mode. 3.
+                    Draw on Image.</p>
+
+                <div style="margin-bottom: 1rem;">
+                    <label style="display: inline-flex; align-items: center; margin-right: 15px; cursor: pointer;">
+                        <input type="radio" name="calib_mode" value="1" checked> Set Top Name Area
+                    </label>
+                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                        <input type="radio" name="calib_mode" value="2"> Set Date Area
+                    </label>
+                </div>
+
+                <div id="calibration-container"
+                    style="position: relative; width: 100%; overflow: hidden; display: none;">
+                    <canvas id="pdfCanvas"
+                        style="border: 1px solid rgba(255,255,255,0.3); cursor: crosshair; max-width: 100%;"></canvas>
+                </div>
+            </div>
+
+            <details style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                <summary style="cursor: pointer; color: #a5b4fc; font-weight: 600;">Manual Coordinates & Text Offset
+                </summary>
+
+                <div style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
+                    <button type="button" id="save-settings-btn" class="save-btn"
+                        style="width: auto; padding: 8px 16px; font-size: 0.9rem; margin-top: 0;">💾 Save
+                        Settings</button>
+                </div>
+
+                <h4 style="margin: 0.5rem 0; color: #fff;">Area 1: Top Name (Whiteout & Text Box)</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                    <label>X0 <input type="number" name="r1_x0" id="r1_x0" value="{{ r1_x0|default(100) }}"></label>
+                    <label>Y0 <input type="number" name="r1_y0" id="r1_y0" value="{{ r1_y0|default(50) }}"></label>
+                    <label>X1 <input type="number" name="r1_x1" id="r1_x1" value="{{ r1_x1|default(550) }}"></label>
+                    <label>Y1 <input type="number" name="r1_y1" id="r1_y1" value="{{ r1_y1|default(150) }}"></label>
+                </div>
+                <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                    <span style="font-size: 0.8rem;">Text Offset:</span>
+                    <input type="number" name="r1_off_x" id="r1_off_x" value="{{ r1_off_x|default(0) }}"
+                        placeholder="+X" style="width: 80px;">
+                    <input type="number" name="r1_off_y" id="r1_off_y" value="{{ r1_off_y|default(0) }}"
+                        placeholder="+Y" style="width: 80px;">
+                </div>
+
+                <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 2: Date (Whiteout & Text Box)</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                    <label>X0 <input type="number" name="r2_x0" id="r2_x0" value="{{ r2_x0|default(250) }}"></label>
+                    <label>Y0 <input type="number" name="r2_y0" id="r2_y0" value="{{ r2_y0|default(520) }}"></label>
+                    <label>X1 <input type="number" name="r2_x1" id="r2_x1" value="{{ r2_x1|default(500) }}"></label>
+                    <label>Y1 <input type="number" name="r2_y1" id="r2_y1" value="{{ r2_y1|default(560) }}"></label>
+                </div>
+                <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                    <span style="font-size: 0.8rem;">Text Offset:</span>
+                    <input type="number" name="r2_off_x" id="r2_off_x" value="{{ r2_off_x|default(0) }}"
+                        placeholder="+X" style="width: 80px;">
+                    <input type="number" name="r2_off_y" id="r2_off_y" value="{{ r2_off_y|default(0) }}"
+                        placeholder="+Y" style="width: 80px;">
+                </div>
+            </details>
+        </form>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('pdf_file');
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('calibration-container');
+        const saveBtn = document.getElementById('save-settings-btn');
+
+        const inputs = ['r1_x0', 'r1_y0', 'r1_x1', 'r1_y1', 'r1_off_x', 'r1_off_y', 'r2_x0', 'r2_y0', 'r2_x1', 'r2_y1', 'r2_off_x', 'r2_off_y'];
+
+        let pdfImage = null;
+        let isDrawing = false;
+        let startX = 0;
+        let startY = 0;
+
+        // --- LocalStorage Persistence ---
+        function saveToStorage() {
+            inputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) localStorage.setItem('pdf_editor_' + id, el.value);
+            });
+            alert('Settings Saved! They will be remembered next time.');
+        }
+
+        function loadFromStorage() {
+            inputs.forEach(id => {
+                const val = localStorage.getItem('pdf_editor_' + id);
+                if (val !== null) {
+                    const el = document.getElementById(id);
+                    if (el) el.value = val;
+                }
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromStorage();
+        });
+
+        if (saveBtn) {
+            saveBtn.addEventListener('click', saveToStorage);
+        }
+        // -------------------------------
+
+        fileInput.addEventListener('change', async function () {
+            if (this.files.length === 0) return;
+            const formData = new FormData();
+            formData.append('pdf_file', this.files[0]);
+
+            try {
+                const response = await fetch('/render_page', { method: 'POST', body: formData });
+                if (response.ok) {
+                    const data = await response.json();
+                    container.style.display = 'block';
+                    pdfImage = new Image();
+                    pdfImage.onload = function () {
+                        canvas.width = pdfImage.width;
+                        canvas.height = pdfImage.height;
+                        draw();
+                    };
+                    pdfImage.src = "data:image/png;base64," + data.image;
+                }
+            } catch (error) { console.error('Error rendering page:', error); }
+        });
+
+        function draw() {
+            if (!pdfImage) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(pdfImage, 0, 0);
+        }
+
+        function getMousePos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return { x: (evt.clientX - rect.left) * scaleX, y: (evt.clientY - rect.top) * scaleY };
+        }
+
+        canvas.addEventListener('mousedown', function (e) {
+            e.preventDefault();
+            isDrawing = true;
+            const pos = getMousePos(e);
+            startX = pos.x;
+            startY = pos.y;
+        });
+
+        canvas.addEventListener('mousemove', function (e) {
+            e.preventDefault();
+            if (isDrawing) {
+                const pos = getMousePos(e);
+                draw();
+                ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                ctx.strokeStyle = 'red';
+                ctx.lineWidth = 2;
+                ctx.fillRect(startX, startY, pos.x - startX, pos.y - startY);
+                ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
+            }
+        });
+
+        canvas.addEventListener('mouseup', function (e) {
+            if (!isDrawing) return;
+            isDrawing = false;
+            const pos = getMousePos(e);
+
+            const x0 = Math.min(startX, pos.x);
+            const x1 = Math.max(startX, pos.x);
+            const y0 = Math.min(startY, pos.y);
+            const y1 = Math.max(startY, pos.y);
+
+            const mode = document.querySelector('input[name="calib_mode"]:checked').value;
+
+            if (mode === "1") {
+                document.getElementById('r1_x0').value = Math.round(x0);
+                document.getElementById('r1_y0').value = Math.round(y0);
+                document.getElementById('r1_x1').value = Math.round(x1);
+                document.getElementById('r1_y1').value = Math.round(y1);
+            } else {
+                document.getElementById('r2_x0').value = Math.round(x0);
+                document.getElementById('r2_y0').value = Math.round(y0);
+                document.getElementById('r2_x1').value = Math.round(x1);
+                document.getElementById('r2_y1').value = Math.round(y1);
+            }
+
+            draw();
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+            ctx.strokeStyle = 'red';
+            ctx.lineWidth = 2;
+            ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+            ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+        });
+    </script>
+</body>
+
+</html>
