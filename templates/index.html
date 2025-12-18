@@ -20,10 +20,11 @@
             color: #fff;
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
             margin: 0;
-            overflow-x: hidden;
+            padding: 2rem 0;
+            overflow: auto;
         }
 
         .ambient {
@@ -157,108 +158,472 @@
         .save-btn {
             background: #10b981 !important;
         }
+
+        /* Tab Navigation */
+        .tab-nav {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            color: #a5b4fc;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 
 <body>
     <div class="ambient"></div>
-    <div class="container">
+    <div class="container" style="position: relative;">
+        <!-- File Number in top right corner -->
+        <div style="position: absolute; top: 1rem; right: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <label for="file_number" style="font-size: 0.75rem; color: #a5b4fc; margin: 0; white-space: nowrap;">File
+                #</label>
+            <input type="text" name="file_number" id="file_number" value="01"
+                style="width: 50px; padding: 6px 8px; font-size: 0.85rem; text-align: center;" form="main-form">
+        </div>
         <h1>PDF Editor</h1>
-        <form action="/" method="post" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="pdf_file">Upload Document</label>
-                <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" required>
-            </div>
 
-            <div class="form-group">
-                <label for="top_name">Top Name / Description</label>
-                <textarea name="top_name" id="top_name" placeholder="Enter main content here..."></textarea>
-            </div>
+        <!-- Tab Navigation -->
+        <div class="tab-nav">
+            <button type="button" class="tab-btn active" data-tab="main-pdf">📄 Main PDF</button>
+            <button type="button" class="tab-btn" data-tab="template-pdf">📋 Template PDF</button>
+        </div>
 
-            <div class="form-group">
-                <label for="second_section">Valid Date Range</label>
-                <input type="text" name="second_section" id="second_section"
-                    placeholder="e.g. 15-12-2025 til 19-12-2025">
-            </div>
+        <!-- Main PDF Tab Content -->
+        <div id="main-pdf" class="tab-content active">
+            <form id="main-form" action="/" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label for="pdf_file">Upload Document</label>
+                    <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" required>
+                </div>
 
-            <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
-                <button type="submit" name="action" value="preview"
-                    style="background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);">Preview Changes</button>
-                <button type="submit" name="action" value="download">Download PDF</button>
-            </div>
+                <div class="form-group">
+                    <label for="top_name">Top Name / Description</label>
+                    <textarea name="top_name" id="top_name" placeholder="Enter main content here..."></textarea>
+                </div>
 
-            {% if preview_image %}
-            <div style="margin-top: 2rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 10px;">
-                <h3 style="margin-top: 0; color: #fff;">Effect Preview</h3>
-                <img src="data:image/png;base64,{{ preview_image }}" style="max-width: 100%; border: 1px solid #fff;">
-            </div>
-            {% endif %}
+                <div class="form-group">
+                    <label for="second_section">Valid Date Range</label>
+                    <input type="text" name="second_section" id="second_section"
+                        placeholder="e.g. 15-12-2025 til 19-12-2025">
+                </div>
 
-            <div style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
-                <summary style="cursor: pointer; color: #a5b4fc; font-weight: 600;">Interactive Calibration</summary>
-                <p style="font-size: 0.8rem; color: #c7d2fe; margin-bottom: 1rem;">1. Upload File. 2. Select Mode. 3.
-                    Draw on Image.</p>
+                <!-- Template Size Selection -->
+                <div class="form-group">
+                    <label>Template Size</label>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="main_template_type" value="big" checked> Big
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="main_template_type" value="small"> Small
+                        </label>
+                    </div>
+                </div>
 
+                <!-- Plate Number and Dates for Template PDF -->
+                <div class="form-group" style="padding-top: 1rem; border-top: 1px solid var(--glass-border);">
+                    <label style="color: #10b981; margin-bottom: 0.5rem; display: block;">📋 Template PDF Data
+                        (Optional)</label>
+                    <p style="font-size: 0.75rem; color: #a5b4fc; margin: 0 0 0.75rem;">Fill these to also download a
+                        template PDF with the main PDF.</p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                        <div>
+                            <label for="plate_number" style="font-size: 0.8rem; color: #c7d2fe;">Plate Number</label>
+                            <input type="text" name="plate_number" id="plate_number" placeholder="e.g. 1881592">
+                        </div>
+                        <div>
+                            <label for="tpl_left_date" style="font-size: 0.8rem; color: #c7d2fe;">Left Date</label>
+                            <input type="text" name="tpl_left_date" id="tpl_left_date" placeholder="e.g. 181225">
+                        </div>
+                        <div>
+                            <label for="tpl_right_date" style="font-size: 0.8rem; color: #c7d2fe;">Right Date</label>
+                            <input type="text" name="tpl_right_date" id="tpl_right_date" placeholder="e.g. 241225">
+                        </div>
+                    </div>
+                    <p style="font-size: 0.7rem; color: #818cf8; margin: 0.5rem 0 0;">
+                        Big: Plate# → Up/Down Number | Left Date → UL/DL Date | Right Date → UR/DR Date<br>
+                        Small: Plate# → Up Number | Left Date → UL Date | Right Date → UR Date
+                    </p>
+                </div>
+
+                <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="submit" name="action" value="preview"
+                        style="background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);">Preview Changes</button>
+                    <button type="button" id="download-btn">Download PDF</button>
+                </div>
+
+                {% if preview_image %}
+                <div style="margin-top: 2rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 10px;">
+                    <h3 style="margin-top: 0; color: #fff;">Effect Preview</h3>
+                    <img src="data:image/png;base64,{{ preview_image }}"
+                        style="max-width: 100%; border: 1px solid #fff;">
+                </div>
+                {% endif %}
+
+                <div style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                    <summary style="cursor: pointer; color: #a5b4fc; font-weight: 600;">Interactive Calibration
+                    </summary>
+                    <p style="font-size: 0.8rem; color: #c7d2fe; margin-bottom: 1rem;">1. Upload File. 2. Select
+                        Mode.
+                        3.
+                        Draw on Image.</p>
+
+                    <div style="margin-bottom: 1rem;">
+                        <label style="display: inline-flex; align-items: center; margin-right: 15px; cursor: pointer;">
+                            <input type="radio" name="calib_mode" value="1" checked> Set Top Name Area
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="calib_mode" value="2"> Set Date Area
+                        </label>
+                    </div>
+
+                    <div id="calibration-container"
+                        style="position: relative; width: 100%; overflow: hidden; display: none;">
+                        <canvas id="pdfCanvas"
+                            style="border: 1px solid rgba(255,255,255,0.3); cursor: crosshair; max-width: 100%;"></canvas>
+                    </div>
+                </div>
+
+                <details style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
+                    <summary style="cursor: pointer; color: #a5b4fc; font-weight: 600;">Manual Coordinates & Text
+                        Offset
+                    </summary>
+
+                    <div style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
+                        <button type="button" id="save-settings-btn" class="save-btn"
+                            style="width: auto; padding: 8px 16px; font-size: 0.9rem; margin-top: 0;">💾 Save
+                            Settings</button>
+                    </div>
+
+                    <h4 style="margin: 0.5rem 0; color: #fff;">Area 1: Top Name (Whiteout & Text Box)</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                        <label>X0 <input type="number" name="r1_x0" id="r1_x0" value="{{ r1_x0|default(11) }}"></label>
+                        <label>Y0 <input type="number" name="r1_y0" id="r1_y0" value="{{ r1_y0|default(73) }}"></label>
+                        <label>X1 <input type="number" name="r1_x1" id="r1_x1" value="{{ r1_x1|default(589) }}"></label>
+                        <label>Y1 <input type="number" name="r1_y1" id="r1_y1" value="{{ r1_y1|default(141) }}"></label>
+                    </div>
+                    <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 0.8rem;">Text Offset:</span>
+                        <input type="number" name="r1_off_x" id="r1_off_x" value="{{ r1_off_x|default(35) }}"
+                            placeholder="+X" style="width: 80px;">
+                        <input type="number" name="r1_off_y" id="r1_off_y" value="{{ r1_off_y|default(8) }}"
+                            placeholder="+Y" style="width: 80px;">
+                    </div>
+
+                    <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 2: Date (Whiteout & Text Box)</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                        <label>X0 <input type="number" name="r2_x0" id="r2_x0" value="{{ r2_x0|default(141) }}"></label>
+                        <label>Y0 <input type="number" name="r2_y0" id="r2_y0" value="{{ r2_y0|default(502) }}"></label>
+                        <label>X1 <input type="number" name="r2_x1" id="r2_x1" value="{{ r2_x1|default(285) }}"></label>
+                        <label>Y1 <input type="number" name="r2_y1" id="r2_y1" value="{{ r2_y1|default(522) }}"></label>
+                    </div>
+                    <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 0.8rem;">Text Offset:</span>
+                        <input type="number" name="r2_off_x" id="r2_off_x" value="{{ r2_off_x|default(-5) }}"
+                            placeholder="+X" style="width: 80px;">
+                        <input type="number" name="r2_off_y" id="r2_off_y" value="{{ r2_off_y|default(-2) }}"
+                            placeholder="+Y" style="width: 80px;">
+                    </div>
+                </details>
+            </form>
+        </div>
+
+        <!-- Template PDF Tab Content -->
+        <div id="template-pdf" class="tab-content">
+            <form id="template-form" action="/" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="download_template">
+
+                <div class="form-group">
+                    <label for="tpl2_template_type">Template Size</label>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="template_type" value="big" checked> Big
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="template_type" value="small"> Small
+                        </label>
+                        <button type="button" id="load-template-btn2" class="save-btn"
+                            style="padding: 6px 12px; font-size: 0.8rem; width: auto;">🔄 Load Template</button>
+                    </div>
+                </div>
+
+                <!-- Live Preview Canvas -->
+                <div id="template-preview-container"
+                    style="position: relative; width: 100%; margin: 1rem 0; background: rgba(0,0,0,0.3); border-radius: 10px; padding: 1rem;">
+                    <h4 style="margin: 0 0 0.5rem; color: #10b981;">📺 Live Preview</h4>
+                    <canvas id="livePreviewCanvas"
+                        style="border: 1px solid rgba(255,255,255,0.3); max-width: 100%; cursor: crosshair;"></canvas>
+                    <p style="font-size: 0.75rem; color: #a5b4fc; margin: 0.5rem 0 0;">Change text/font below to see
+                        live preview. Draw boxes to set positions.</p>
+                </div>
+
+                <!-- Text Inputs -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin: 0;">
+                        <label for="tpl2_up_number" style="font-size: 0.85rem;">Up Number</label>
+                        <input type="text" name="tpl_up_number" id="tpl2_up_number" placeholder="1881597">
+                    </div>
+                    <div id="input-dn" class="form-group" style="margin: 0;">
+                        <label for="tpl2_down_number" style="font-size: 0.85rem;">Down Number</label>
+                        <input type="text" name="tpl_down_number" id="tpl2_down_number" placeholder="1881597">
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin: 0;">
+                        <label for="tpl2_upleft_date" style="font-size: 0.85rem;">Up-Left Date</label>
+                        <input type="text" name="tpl_upleft_date" id="tpl2_upleft_date" placeholder="181225">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label for="tpl2_upright_date" style="font-size: 0.85rem;">Up-Right Date</label>
+                        <input type="text" name="tpl_upright_date" id="tpl2_upright_date" placeholder="241225">
+                    </div>
+                </div>
+                <div id="input-down-dates"
+                    style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin: 0;">
+                        <label for="tpl2_downleft_date" style="font-size: 0.85rem;">Down-Left Date</label>
+                        <input type="text" name="tpl_downleft_date" id="tpl2_downleft_date" placeholder="181225">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label for="tpl2_downright_date" style="font-size: 0.85rem;">Down-Right Date</label>
+                        <input type="text" name="tpl_downright_date" id="tpl2_downright_date" placeholder="241225">
+                    </div>
+                </div>
+
+                <!-- Font Size Controls -->
+                <div style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; margin-bottom: 1rem;">
+                    <h5 style="margin: 0 0 0.5rem; color: #10b981;">📐 Font Sizes (PDF Points)</h5>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="tpl2_number_fontsize" style="font-size: 0.85rem;">Numbers Size</label>
+                            <input type="number" name="tpl_number_fontsize" id="tpl2_number_fontsize" value="63"
+                                step="1">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="tpl2_date_fontsize" style="font-size: 0.85rem;">Dates Size</label>
+                            <input type="number" name="tpl_date_fontsize" id="tpl2_date_fontsize" value="10" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Calibration Mode -->
                 <div style="margin-bottom: 1rem;">
-                    <label style="display: inline-flex; align-items: center; margin-right: 15px; cursor: pointer;">
-                        <input type="radio" name="calib_mode" value="1" checked> Set Top Name Area
-                    </label>
-                    <label style="display: inline-flex; align-items: center; cursor: pointer;">
-                        <input type="radio" name="calib_mode" value="2"> Set Date Area
-                    </label>
+                    <label style="font-size: 0.9rem; color: #c7d2fe;">Select area to calibrate (draw on
+                        preview):</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.8rem;">
+                            <input type="radio" name="tpl2_calib_mode" value="up_num" checked> Up#
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.8rem;">
+                            <input type="radio" name="tpl2_calib_mode" value="down_num"> Down#
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.8rem;">
+                            <input type="radio" name="tpl2_calib_mode" value="ul_date"> UL Date
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.8rem;">
+                            <input type="radio" name="tpl2_calib_mode" value="ur_date"> UR Date
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.8rem;">
+                            <input type="radio" name="tpl2_calib_mode" value="dl_date"> DL Date
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.8rem;">
+                            <input type="radio" name="tpl2_calib_mode" value="dr_date"> DR Date
+                        </label>
+                    </div>
                 </div>
 
-                <div id="calibration-container"
-                    style="position: relative; width: 100%; overflow: hidden; display: none;">
-                    <canvas id="pdfCanvas"
-                        style="border: 1px solid rgba(255,255,255,0.3); cursor: crosshair; max-width: 100%;"></canvas>
-                </div>
-            </div>
+                <!-- Template Coordinates (Expandable) -->
+                <details style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <summary style="cursor: pointer; color: #a5b4fc; font-weight: 600; font-size: 0.9rem;">📐 Template
+                        Coordinates (Click to expand)</summary>
 
-            <details style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
-                <summary style="cursor: pointer; color: #a5b4fc; font-weight: 600;">Manual Coordinates & Text Offset
-                </summary>
+                    <div style="margin-top: 1rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Up Number</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="tpl_un_x0" id="tpl2_un_x0" value="57"
+                                    style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="tpl_un_y0" id="tpl2_un_y0" value="31"
+                                    style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="tpl_un_x1" id="tpl2_un_x1" value="804"
+                                    style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="tpl_un_y1" id="tpl2_un_y1" value="203"
+                                    style="width: 100%;"></label>
+                        </div>
+                        <div
+                            style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="tpl_un_off_x" id="tpl2_un_off_x" value="0" placeholder="+X"
+                                style="width: 60px;">
+                            <input type="number" name="tpl_un_off_y" id="tpl2_un_off_y" value="0" placeholder="+Y"
+                                style="width: 60px;">
+                        </div>
+                    </div>
 
-                <div style="margin-bottom: 1rem; display: flex; justify-content: flex-end;">
-                    <button type="button" id="save-settings-btn" class="save-btn"
-                        style="width: auto; padding: 8px 16px; font-size: 0.9rem; margin-top: 0;">💾 Save
-                        Settings</button>
-                </div>
+                    <div id="coord-dn" style="margin-top: 0.5rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Down Number</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="tpl_dn_x0" id="tpl2_dn_x0" value="57"
+                                    style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="tpl_dn_y0" id="tpl2_dn_y0" value="321"
+                                    style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="tpl_dn_x1" id="tpl2_dn_x1" value="804"
+                                    style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="tpl_dn_y1" id="tpl2_dn_y1" value="481"
+                                    style="width: 100%;"></label>
+                        </div>
+                        <div
+                            style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="tpl_dn_off_x" id="tpl2_dn_off_x" value="0" placeholder="+X"
+                                style="width: 60px;">
+                            <input type="number" name="tpl_dn_off_y" id="tpl2_dn_off_y" value="0" placeholder="+Y"
+                                style="width: 60px;">
+                        </div>
+                    </div>
 
-                <h4 style="margin: 0.5rem 0; color: #fff;">Area 1: Top Name (Whiteout & Text Box)</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
-                    <label>X0 <input type="number" name="r1_x0" id="r1_x0" value="{{ r1_x0|default(100) }}"></label>
-                    <label>Y0 <input type="number" name="r1_y0" id="r1_y0" value="{{ r1_y0|default(50) }}"></label>
-                    <label>X1 <input type="number" name="r1_x1" id="r1_x1" value="{{ r1_x1|default(550) }}"></label>
-                    <label>Y1 <input type="number" name="r1_y1" id="r1_y1" value="{{ r1_y1|default(150) }}"></label>
-                </div>
-                <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
-                    <span style="font-size: 0.8rem;">Text Offset:</span>
-                    <input type="number" name="r1_off_x" id="r1_off_x" value="{{ r1_off_x|default(0) }}"
-                        placeholder="+X" style="width: 80px;">
-                    <input type="number" name="r1_off_y" id="r1_off_y" value="{{ r1_off_y|default(0) }}"
-                        placeholder="+Y" style="width: 80px;">
-                </div>
+                    <div style="margin-top: 0.5rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Up-Left Date</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="tpl_ul_x0" id="tpl2_ul_x0" value="72"
+                                    style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="tpl_ul_y0" id="tpl2_ul_y0" value="225"
+                                    style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="tpl_ul_x1" id="tpl2_ul_x1" value="176"
+                                    style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="tpl_ul_y1" id="tpl2_ul_y1" value="259"
+                                    style="width: 100%;"></label>
+                        </div>
+                        <div
+                            style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="tpl_ul_off_x" id="tpl2_ul_off_x" value="0" placeholder="+X"
+                                style="width: 60px;">
+                            <input type="number" name="tpl_ul_off_y" id="tpl2_ul_off_y" value="0" placeholder="+Y"
+                                style="width: 60px;">
+                        </div>
+                    </div>
 
-                <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 2: Date (Whiteout & Text Box)</h4>
-                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
-                    <label>X0 <input type="number" name="r2_x0" id="r2_x0" value="{{ r2_x0|default(250) }}"></label>
-                    <label>Y0 <input type="number" name="r2_y0" id="r2_y0" value="{{ r2_y0|default(520) }}"></label>
-                    <label>X1 <input type="number" name="r2_x1" id="r2_x1" value="{{ r2_x1|default(500) }}"></label>
-                    <label>Y1 <input type="number" name="r2_y1" id="r2_y1" value="{{ r2_y1|default(560) }}"></label>
+                    <div style="margin-top: 0.5rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Up-Right Date</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="tpl_ur_x0" id="tpl2_ur_x0" value="666"
+                                    style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="tpl_ur_y0" id="tpl2_ur_y0" value="225"
+                                    style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="tpl_ur_x1" id="tpl2_ur_x1" value="777"
+                                    style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="tpl_ur_y1" id="tpl2_ur_y1" value="259"
+                                    style="width: 100%;"></label>
+                        </div>
+                        <div
+                            style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="tpl_ur_off_x" id="tpl2_ur_off_x" value="0" placeholder="+X"
+                                style="width: 60px;">
+                            <input type="number" name="tpl_ur_off_y" id="tpl2_ur_off_y" value="0" placeholder="+Y"
+                                style="width: 60px;">
+                        </div>
+                    </div>
+
+                    <div id="coord-dl" style="margin-top: 0.5rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Down-Left Date</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="tpl_dl_x0" id="tpl2_dl_x0" value="72"
+                                    style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="tpl_dl_y0" id="tpl2_dl_y0" value="514"
+                                    style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="tpl_dl_x1" id="tpl2_dl_x1" value="176"
+                                    style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="tpl_dl_y1" id="tpl2_dl_y1" value="545"
+                                    style="width: 100%;"></label>
+                        </div>
+                        <div
+                            style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="tpl_dl_off_x" id="tpl2_dl_off_x" value="0" placeholder="+X"
+                                style="width: 60px;">
+                            <input type="number" name="tpl_dl_off_y" id="tpl2_dl_off_y" value="0" placeholder="+Y"
+                                style="width: 60px;">
+                        </div>
+                    </div>
+
+                    <div id="coord-dr" style="margin-top: 0.5rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Down-Right Date</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="tpl_dr_x0" id="tpl2_dr_x0" value="666"
+                                    style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="tpl_dr_y0" id="tpl2_dr_y0" value="513"
+                                    style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="tpl_dr_x1" id="tpl2_dr_x1" value="777"
+                                    style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="tpl_dr_y1" id="tpl2_dr_y1" value="550"
+                                    style="width: 100%;"></label>
+                        </div>
+                        <div
+                            style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="tpl_dr_off_x" id="tpl2_dr_off_x" value="0" placeholder="+X"
+                                style="width: 60px;">
+                            <input type="number" name="tpl_dr_off_y" id="tpl2_dr_off_y" value="0" placeholder="+Y"
+                                style="width: 60px;">
+                        </div>
+                    </div>
+                </details>
+
+                <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="button" id="save-template-btn2" class="save-btn">💾 Save Settings</button>
+                    <button type="button" id="download-template-btn">📥 Download Template PDF</button>
                 </div>
-                <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
-                    <span style="font-size: 0.8rem;">Text Offset:</span>
-                    <input type="number" name="r2_off_x" id="r2_off_x" value="{{ r2_off_x|default(0) }}"
-                        placeholder="+X" style="width: 80px;">
-                    <input type="number" name="r2_off_y" id="r2_off_y" value="{{ r2_off_y|default(0) }}"
-                        placeholder="+Y" style="width: 80px;">
-                </div>
-            </details>
-        </form>
+            </form>
+        </div>
     </div>
 
     <script>
+        // ===== TAB SWITCHING =====
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active from all tabs
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+                // Activate clicked tab
+                btn.classList.add('active');
+                const tabId = btn.getAttribute('data-tab');
+                const tabContent = document.getElementById(tabId);
+                if (tabContent) tabContent.classList.add('active');
+            });
+        });
         const fileInput = document.getElementById('pdf_file');
         const canvas = document.getElementById('pdfCanvas');
         const ctx = canvas.getContext('2d');
@@ -266,6 +631,9 @@
         const saveBtn = document.getElementById('save-settings-btn');
 
         const inputs = ['r1_x0', 'r1_y0', 'r1_x1', 'r1_y1', 'r1_off_x', 'r1_off_y', 'r2_x0', 'r2_y0', 'r2_x1', 'r2_y1', 'r2_off_x', 'r2_off_y'];
+        const fileNumberInput = document.getElementById('file_number');
+        const downloadBtn = document.getElementById('download-btn');
+        const form = document.querySelector('form');
 
         let pdfImage = null;
         let isDrawing = false;
@@ -293,12 +661,139 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             loadFromStorage();
+            // Load file number from localStorage
+            const savedFileNum = localStorage.getItem('pdf_editor_file_number');
+            if (savedFileNum !== null) {
+                fileNumberInput.value = savedFileNum;
+            }
         });
 
         if (saveBtn) {
             saveBtn.addEventListener('click', saveToStorage);
         }
+
+        // Save file number when user changes it
+        fileNumberInput.addEventListener('change', () => {
+            localStorage.setItem('pdf_editor_file_number', fileNumberInput.value);
+        });
+
+        // Handle download with auto-increment
+        downloadBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            // Get current file number
+            const currentNum = fileNumberInput.value;
+
+            // Create form data and add action
+            const formData = new FormData(form);
+            formData.set('action', 'download');
+
+            // Submit form via fetch to get the PDF
+            try {
+                const response = await fetch('/', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    // Download the file
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = currentNum + '.pdf';
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    a.remove();
+
+                    // Auto-increment the file number
+                    const numericPart = parseInt(currentNum, 10);
+                    if (!isNaN(numericPart)) {
+                        const nextNum = numericPart + 1;
+                        // Preserve leading zeros if original had them
+                        const paddedNum = String(nextNum).padStart(currentNum.length, '0');
+                        fileNumberInput.value = paddedNum;
+                        localStorage.setItem('pdf_editor_file_number', paddedNum);
+                    }
+
+                    // Check if plate number is filled - download template PDF
+                    const plateNumber = document.getElementById('plate_number').value;
+                    const leftDate = document.getElementById('tpl_left_date')?.value || '';
+                    const rightDate = document.getElementById('tpl_right_date')?.value || '';
+
+                    if (plateNumber.trim()) {
+                        // Get selected template type from Main PDF tab
+                        const templateType = document.querySelector('input[name="main_template_type"]:checked')?.value || 'big';
+                        const prefix = 'pdf_editor_' + templateType + '_';
+
+                        // Get coordinates and fonts from localStorage (saved in Template PDF tab)
+                        const getCoord = (id) => localStorage.getItem(prefix + id) || '0';
+
+                        // Build form data for template generation
+                        const templateFormData = new FormData();
+                        templateFormData.append('template_type', templateType);
+                        templateFormData.append('plate_number', plateNumber);
+                        templateFormData.append('left_date', leftDate);
+                        templateFormData.append('right_date', rightDate);
+
+                        // Font sizes
+                        templateFormData.append('number_fontsize', getCoord('tpl2_number_fontsize'));
+                        templateFormData.append('date_fontsize', getCoord('tpl2_date_fontsize'));
+
+                        // Coordinates for each area
+                        ['un', 'dn', 'ul', 'ur', 'dl', 'dr'].forEach(area => {
+                            ['x0', 'y0', 'x1', 'y1', 'off_x', 'off_y'].forEach(coord => {
+                                templateFormData.append(`${area}_${coord}`, getCoord(`tpl2_${area}_${coord}`));
+                            });
+                        });
+
+                        // Generate template PDF filename (strip leading zeros)
+                        const templateFileName = parseInt(currentNum, 10) + '.pdf';
+
+                        try {
+                            const templateResponse = await fetch('/generate_template', {
+                                method: 'POST',
+                                body: templateFormData
+                            });
+
+                            if (templateResponse.ok) {
+                                const templateBlob = await templateResponse.blob();
+                                const templateUrl = window.URL.createObjectURL(templateBlob);
+                                const templateA = document.createElement('a');
+                                templateA.href = templateUrl;
+                                templateA.download = templateFileName;
+                                document.body.appendChild(templateA);
+                                templateA.click();
+                                window.URL.revokeObjectURL(templateUrl);
+                                templateA.remove();
+                            }
+                        } catch (tplError) {
+                            console.error('Template PDF error:', tplError);
+                        }
+                    }
+                } else {
+                    alert('Error downloading PDF');
+                }
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Error downloading PDF: ' + error.message);
+            }
+        });
         // -------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         fileInput.addEventListener('change', async function () {
             if (this.files.length === 0) return;
@@ -386,6 +881,347 @@
             ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
             ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
         });
+
+        // ===== TEMPLATE PDF TAB - LIVE PREVIEW =====
+        const liveCanvas = document.getElementById('livePreviewCanvas');
+        const liveCtx = liveCanvas ? liveCanvas.getContext('2d') : null;
+        const loadTemplateBtn2 = document.getElementById('load-template-btn2');
+        const downloadTemplateBtn = document.getElementById('download-template-btn');
+        const saveTemplateBtn2 = document.getElementById('save-template-btn2');
+
+        let liveTemplateImage = null;
+        let liveScaleRatio = 1;
+        let liveDrawing = false;
+        let liveStartX = 0, liveStartY = 0;
+
+        // Get all tpl2 inputs for live preview
+        const tpl2TextIds = ['tpl2_up_number', 'tpl2_down_number', 'tpl2_upleft_date', 'tpl2_upright_date', 'tpl2_downleft_date', 'tpl2_downright_date'];
+        const tpl2FontIds = ['tpl2_number_fontsize', 'tpl2_date_fontsize'];
+        const tpl2CoordIds = [
+            'tpl2_un_x0', 'tpl2_un_y0', 'tpl2_un_x1', 'tpl2_un_y1', 'tpl2_un_off_x', 'tpl2_un_off_y',
+            'tpl2_dn_x0', 'tpl2_dn_y0', 'tpl2_dn_x1', 'tpl2_dn_y1', 'tpl2_dn_off_x', 'tpl2_dn_off_y',
+            'tpl2_ul_x0', 'tpl2_ul_y0', 'tpl2_ul_x1', 'tpl2_ul_y1', 'tpl2_ul_off_x', 'tpl2_ul_off_y',
+            'tpl2_ur_x0', 'tpl2_ur_y0', 'tpl2_ur_x1', 'tpl2_ur_y1', 'tpl2_ur_off_x', 'tpl2_ur_off_y',
+            'tpl2_dl_x0', 'tpl2_dl_y0', 'tpl2_dl_x1', 'tpl2_dl_y1', 'tpl2_dl_off_x', 'tpl2_dl_off_y',
+            'tpl2_dr_x0', 'tpl2_dr_y0', 'tpl2_dr_x1', 'tpl2_dr_y1', 'tpl2_dr_off_x', 'tpl2_dr_off_y'
+        ];
+
+        // Load template settings from localStorage
+        function loadTpl2Settings() {
+            [...tpl2TextIds, ...tpl2FontIds, ...tpl2CoordIds].forEach(id => {
+                const val = localStorage.getItem('pdf_editor_' + id);
+                if (val !== null) {
+                    const el = document.getElementById(id);
+                    if (el) el.value = val;
+                }
+            });
+        }
+        loadTpl2Settings();
+
+        // Get current template type
+        function getCurrentTemplateType() {
+            return document.querySelector('input[name="template_type"]:checked')?.value || 'big';
+        }
+
+        // Save template settings with template-type-specific keys
+        function saveTpl2Settings() {
+            const templateType = getCurrentTemplateType();
+            const prefix = 'pdf_editor_' + templateType + '_';
+            [...tpl2TextIds, ...tpl2FontIds, ...tpl2CoordIds].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) localStorage.setItem(prefix + id, el.value);
+            });
+            // Also save which template type was selected
+            localStorage.setItem('pdf_editor_template_type', templateType);
+        }
+
+        // Load template settings for a specific template type
+        function loadTpl2SettingsForType(templateType) {
+            const prefix = 'pdf_editor_' + templateType + '_';
+            [...tpl2TextIds, ...tpl2FontIds, ...tpl2CoordIds].forEach(id => {
+                const val = localStorage.getItem(prefix + id);
+                if (val !== null) {
+                    const el = document.getElementById(id);
+                    if (el) el.value = val;
+                }
+            });
+        }
+
+        if (saveTemplateBtn2) {
+            saveTemplateBtn2.addEventListener('click', () => {
+                saveTpl2Settings();
+                const templateType = getCurrentTemplateType();
+                alert('Settings saved for ' + templateType.toUpperCase() + ' template!');
+            });
+        }
+
+        // Template type switching (big vs small)
+        const templateTypeRadios = document.querySelectorAll('input[name="template_type"]');
+        const coordDn = document.getElementById('coord-dn');
+        const coordDl = document.getElementById('coord-dl');
+        const coordDr = document.getElementById('coord-dr');
+        const inputDn = document.getElementById('input-dn');
+        const inputDownDates = document.getElementById('input-down-dates');
+
+        // Default coordinates for each template type
+        const bigDefaults = {
+            tpl2_un_x0: 57, tpl2_un_y0: 31, tpl2_un_x1: 804, tpl2_un_y1: 203,
+            tpl2_dn_x0: 57, tpl2_dn_y0: 321, tpl2_dn_x1: 804, tpl2_dn_y1: 481,
+            tpl2_ul_x0: 72, tpl2_ul_y0: 225, tpl2_ul_x1: 176, tpl2_ul_y1: 259,
+            tpl2_ur_x0: 666, tpl2_ur_y0: 225, tpl2_ur_x1: 777, tpl2_ur_y1: 259,
+            tpl2_dl_x0: 72, tpl2_dl_y0: 514, tpl2_dl_x1: 176, tpl2_dl_y1: 545,
+            tpl2_dr_x0: 666, tpl2_dr_y0: 513, tpl2_dr_x1: 777, tpl2_dr_y1: 550,
+            tpl2_number_fontsize: 63, tpl2_date_fontsize: 10
+        };
+
+        const smallDefaults = {
+            tpl2_un_x0: 43, tpl2_un_y0: 115, tpl2_un_x1: 529, tpl2_un_y1: 219,
+            tpl2_ul_x0: 46, tpl2_ul_y0: 281, tpl2_ul_x1: 151, tpl2_ul_y1: 309,
+            tpl2_ur_x0: 431, tpl2_ur_y0: 276, tpl2_ur_x1: 538, tpl2_ur_y1: 309,
+            tpl2_number_fontsize: 121, tpl2_date_fontsize: 31
+        };
+
+        function updateTemplateType(type) {
+            const isSmall = type === 'small';
+
+            // Hide/show text input fields
+            if (inputDn) inputDn.style.display = isSmall ? 'none' : 'block';
+            if (inputDownDates) inputDownDates.style.display = isSmall ? 'none' : 'grid';
+
+            // Hide/show coordinate sections
+            if (coordDn) coordDn.style.display = isSmall ? 'none' : 'block';
+            if (coordDl) coordDl.style.display = isSmall ? 'none' : 'block';
+            if (coordDr) coordDr.style.display = isSmall ? 'none' : 'block';
+
+            // Hide/show calibration mode options for down sections
+            const calibModes = document.querySelectorAll('input[name="tpl2_calib_mode"]');
+            calibModes.forEach(mode => {
+                const label = mode.closest('label');
+                if (label) {
+                    if (mode.value === 'down_num' || mode.value === 'dl_date' || mode.value === 'dr_date') {
+                        label.style.display = isSmall ? 'none' : 'inline-flex';
+                    }
+                }
+            });
+
+            // NOTE: Settings are NOT auto-loaded when switching templates
+            // User must click "Load Template" button to load settings for the selected template type
+        }
+
+        templateTypeRadios.forEach(radio => {
+            radio.addEventListener('change', (e) => updateTemplateType(e.target.value));
+        });
+
+        // Draw live preview with text overlays
+        function drawLivePreview() {
+            if (!liveCanvas || !liveCtx || !liveTemplateImage) return;
+
+            // Draw template image
+            liveCtx.clearRect(0, 0, liveCanvas.width, liveCanvas.height);
+            liveCtx.drawImage(liveTemplateImage, 0, 0, liveCanvas.width, liveCanvas.height);
+
+            // Get font sizes
+            const numFont = parseFloat(document.getElementById('tpl2_number_fontsize')?.value || 63);
+            const dateFont = parseFloat(document.getElementById('tpl2_date_fontsize')?.value || 10);
+
+            // Scale font for canvas (canvas is scaled down from PDF)
+            const scaledNumFont = numFont / liveScaleRatio;
+            const scaledDateFont = dateFont / liveScaleRatio;
+
+            liveCtx.fillStyle = 'black';
+            liveCtx.textBaseline = 'top';
+
+            // Helper to draw text area
+            function drawTextArea(textId, prefix, fontSize) {
+                const text = document.getElementById(textId)?.value || '';
+                const x0 = parseFloat(document.getElementById(prefix + '_x0')?.value || 0) / liveScaleRatio;
+                const y0 = parseFloat(document.getElementById(prefix + '_y0')?.value || 0) / liveScaleRatio;
+                const x1 = parseFloat(document.getElementById(prefix + '_x1')?.value || 100) / liveScaleRatio;
+                const y1 = parseFloat(document.getElementById(prefix + '_y1')?.value || 50) / liveScaleRatio;
+                const offX = parseFloat(document.getElementById(prefix + '_off_x')?.value || 0) / liveScaleRatio;
+                const offY = parseFloat(document.getElementById(prefix + '_off_y')?.value || 0) / liveScaleRatio;
+
+                // Draw whiteout area (semi-transparent for preview)
+                liveCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                liveCtx.fillRect(x0, y0, x1 - x0, y1 - y0);
+
+                // Draw calibration border
+                liveCtx.strokeStyle = 'rgba(0, 150, 136, 0.8)';
+                liveCtx.lineWidth = 1;
+                liveCtx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+
+                // Draw text
+                if (text) {
+                    liveCtx.fillStyle = 'black';
+                    liveCtx.font = `bold ${fontSize}px Arial, sans-serif`;
+                    liveCtx.fillText(text, x0 + offX, y0 + offY);
+                }
+            }
+
+            // Draw all 6 areas
+            drawTextArea('tpl2_up_number', 'tpl2_un', scaledNumFont);
+            drawTextArea('tpl2_down_number', 'tpl2_dn', scaledNumFont);
+            drawTextArea('tpl2_upleft_date', 'tpl2_ul', scaledDateFont);
+            drawTextArea('tpl2_upright_date', 'tpl2_ur', scaledDateFont);
+            drawTextArea('tpl2_downleft_date', 'tpl2_dl', scaledDateFont);
+            drawTextArea('tpl2_downright_date', 'tpl2_dr', scaledDateFont);
+        }
+
+        // Add input listeners for live preview updates
+        [...tpl2TextIds, ...tpl2FontIds, ...tpl2CoordIds].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', drawLivePreview);
+            }
+        });
+
+        // Load Template button
+        if (loadTemplateBtn2) {
+            loadTemplateBtn2.addEventListener('click', async () => {
+                const templateType = document.querySelector('#template-pdf input[name="template_type"]:checked')?.value || 'big';
+                const formData = new FormData();
+                formData.append('template_type', templateType);
+
+                // Load saved settings for this template type
+                const isSmall = templateType === 'small';
+                const defaults = isSmall ? smallDefaults : bigDefaults;
+                const prefix = 'pdf_editor_' + templateType + '_';
+
+                // Check if we have saved settings for this template type
+                const hasSavedSettings = localStorage.getItem(prefix + 'tpl2_un_x0') !== null;
+
+                if (hasSavedSettings) {
+                    // Load saved settings
+                    [...tpl2TextIds, ...tpl2FontIds, ...tpl2CoordIds].forEach(id => {
+                        const val = localStorage.getItem(prefix + id);
+                        if (val !== null) {
+                            const el = document.getElementById(id);
+                            if (el) el.value = val;
+                        }
+                    });
+                } else {
+                    // No saved settings - load defaults
+                    Object.entries(defaults).forEach(([id, value]) => {
+                        const el = document.getElementById(id);
+                        if (el) el.value = value;
+                    });
+                }
+
+                // Update field visibility for the selected template type
+                updateTemplateType(templateType);
+
+                try {
+                    const response = await fetch('/render_template', { method: 'POST', body: formData });
+                    const data = await response.json();
+                    if (data.image) {
+                        liveTemplateImage = new Image();
+                        liveTemplateImage.onload = () => {
+                            const containerWidth = liveCanvas.parentElement.clientWidth - 32;
+                            liveScaleRatio = data.width / containerWidth;
+                            liveCanvas.width = containerWidth;
+                            liveCanvas.height = data.height / liveScaleRatio;
+                            drawLivePreview();
+                        };
+                        liveTemplateImage.src = 'data:image/png;base64,' + data.image;
+                    }
+                } catch (e) {
+                    console.error('Error loading template:', e);
+                }
+            });
+        }
+
+        // Canvas drawing for calibration
+        if (liveCanvas) {
+            liveCanvas.addEventListener('mousedown', (e) => {
+                if (!liveTemplateImage) return;
+                liveDrawing = true;
+                const rect = liveCanvas.getBoundingClientRect();
+                liveStartX = e.clientX - rect.left;
+                liveStartY = e.clientY - rect.top;
+            });
+
+            liveCanvas.addEventListener('mousemove', (e) => {
+                if (!liveDrawing || !liveTemplateImage) return;
+                const rect = liveCanvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+
+                // Redraw template and text overlays
+                drawLivePreview();
+
+                // Draw selection rectangle
+                liveCtx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+                liveCtx.strokeStyle = '#10b981';
+                liveCtx.lineWidth = 2;
+                const x = Math.min(liveStartX, currentX);
+                const y = Math.min(liveStartY, currentY);
+                const w = Math.abs(currentX - liveStartX);
+                const h = Math.abs(currentY - liveStartY);
+                liveCtx.fillRect(x, y, w, h);
+                liveCtx.strokeRect(x, y, w, h);
+            });
+
+            liveCanvas.addEventListener('mouseup', (e) => {
+                if (!liveDrawing || !liveTemplateImage) return;
+                liveDrawing = false;
+
+                const rect = liveCanvas.getBoundingClientRect();
+                const endX = e.clientX - rect.left;
+                const endY = e.clientY - rect.top;
+
+                // Scale back to PDF coordinates
+                const x0 = Math.round(Math.min(liveStartX, endX) * liveScaleRatio);
+                const y0 = Math.round(Math.min(liveStartY, endY) * liveScaleRatio);
+                const x1 = Math.round(Math.max(liveStartX, endX) * liveScaleRatio);
+                const y1 = Math.round(Math.max(liveStartY, endY) * liveScaleRatio);
+
+                // Get selected calibration mode
+                const mode = document.querySelector('input[name="tpl2_calib_mode"]:checked')?.value || 'up_num';
+                const prefix = {
+                    'up_num': 'tpl2_un', 'down_num': 'tpl2_dn',
+                    'ul_date': 'tpl2_ul', 'ur_date': 'tpl2_ur',
+                    'dl_date': 'tpl2_dl', 'dr_date': 'tpl2_dr'
+                }[mode];
+
+                if (prefix) {
+                    document.getElementById(prefix + '_x0').value = x0;
+                    document.getElementById(prefix + '_y0').value = y0;
+                    document.getElementById(prefix + '_x1').value = x1;
+                    document.getElementById(prefix + '_y1').value = y1;
+                }
+
+                drawLivePreview();
+            });
+        }
+
+        // Download Template PDF button
+        if (downloadTemplateBtn) {
+            downloadTemplateBtn.addEventListener('click', async () => {
+                const form = document.getElementById('template-form');
+                const formData = new FormData(form);
+
+                try {
+                    const response = await fetch('/', { method: 'POST', body: formData });
+                    if (response.ok) {
+                        const blob = await response.blob();
+                        const url = window.URL.createObjectURL(blob);
+                        const fileNum = document.getElementById('file_number')?.value || '01';
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = parseInt(fileNum, 10) + '.pdf';
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(url);
+                        a.remove();
+                    } else {
+                        alert('Error downloading template PDF');
+                    }
+                } catch (e) {
+                    console.error('Download error:', e);
+                    alert('Error: ' + e.message);
+                }
+            });
+        }
     </script>
 </body>
 
