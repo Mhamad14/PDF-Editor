@@ -231,87 +231,118 @@
                     <textarea name="top_name" id="top_name" placeholder="Enter main content here..."></textarea>
                 </div>
 
-                <div class="form-group">
-                    <label for="second_section">Valid Date Range</label>
-                    <input type="text" name="second_section" id="second_section"
-                        placeholder="e.g. 15-12-2025 til 19-12-2025">
+                <!-- Toggle for Date/Template fields -->
+                <div class="form-group" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0;">
+                    <label class="toggle-switch"
+                        style="position: relative; display: inline-block; width: 50px; height: 26px; margin: 0;">
+                        <input type="checkbox" id="enable_date_fields" checked style="opacity: 0; width: 0; height: 0;">
+                        <span
+                            style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; border-radius: 26px; transition: 0.3s;"></span>
+                        <span id="toggle-slider"
+                            style="position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s;"></span>
+                    </label>
+                    <span style="font-size: 0.9rem; font-weight: 500;">Include Date & Template</span>
+                    <span style="font-size: 0.75rem; color: #a5b4fc;">(Off = only change name)</span>
                 </div>
 
-                <!-- Template Size Selection -->
-                <div class="form-group">
-                    <label>Template Size</label>
-                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
-                            <input type="radio" name="main_template_type" value="big" checked> Big
-                        </label>
-                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
-                            <input type="radio" name="main_template_type" value="small"> Small
-                        </label>
+                <div id="date-fields-container">
+                    <div class="form-group">
+                        <label for="second_section">Valid Date Range</label>
+                        <input type="text" name="second_section" id="second_section"
+                            placeholder="e.g. 15-12-2025 til 19-12-2025">
                     </div>
-                </div>
 
-                <!-- Plate Number and Dates for Template PDF -->
-                <div class="form-group" style="padding-top: 1rem; border-top: 1px solid var(--glass-border);">
-                    <label style="color: #10b981; margin-bottom: 0.5rem; display: block;">📋 Template PDF Data
-                        (Optional)</label>
-                    <p style="font-size: 0.75rem; color: #a5b4fc; margin: 0 0 0.75rem;">Fill these to also download a
-                        template PDF with the main PDF.</p>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
-                        <div>
-                            <label for="plate_number" style="font-size: 0.8rem; color: #c7d2fe;">Plate Number</label>
-                            <input type="text" name="plate_number" id="plate_number" placeholder="e.g. 1881592">
-                        </div>
-                        <div>
-                            <label for="tpl_left_date" style="font-size: 0.8rem; color: #c7d2fe;">Left Date</label>
-                            <input type="text" name="tpl_left_date" id="tpl_left_date" placeholder="e.g. 181225">
-                        </div>
-                        <div>
-                            <label for="tpl_right_date" style="font-size: 0.8rem; color: #c7d2fe;">Right Date</label>
-                            <input type="text" name="tpl_right_date" id="tpl_right_date" placeholder="e.g. 241225">
+                    <!-- Template Size Selection -->
+                    <div class="form-group">
+                        <label>Template Size</label>
+                        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                            <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                                <input type="radio" name="main_template_type" value="big" checked> Big
+                            </label>
+                            <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                                <input type="radio" name="main_template_type" value="small"> Small
+                            </label>
                         </div>
                     </div>
-                    <p style="font-size: 0.7rem; color: #818cf8; margin: 0.5rem 0 0;">
-                        Big: Plate# → Up/Down Number | Left Date → UL/DL Date | Right Date → UR/DR Date<br>
-                        Small: Plate# → Up Number | Left Date → UL Date | Right Date → UR Date
-                    </p>
-                </div>
+
+                    <!-- Plate Number and Dates for Template PDF -->
+                    <div class="form-group" style="padding-top: 1rem; border-top: 1px solid var(--glass-border);">
+                        <label style="color: #10b981; margin-bottom: 0.5rem; display: block;">📋 Template PDF Data
+                            (Optional)</label>
+                        <p style="font-size: 0.75rem; color: #a5b4fc; margin: 0 0 0.75rem;">Fill these to also download
+                            a
+                            template PDF with the main PDF.</p>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                            <div>
+                                <label for="plate_number" style="font-size: 0.8rem; color: #c7d2fe;">Plate
+                                    Number</label>
+                                <input type="text" name="plate_number" id="plate_number" placeholder="e.g. 1881592">
+                            </div>
+                            <div>
+                                <label for="tpl_left_date" style="font-size: 0.8rem; color: #c7d2fe;">Left Date</label>
+                                <input type="text" name="tpl_left_date" id="tpl_left_date" placeholder="e.g. 181225">
+                            </div>
+                            <div>
+                                <label for="tpl_right_date" style="font-size: 0.8rem; color: #c7d2fe;">Right
+                                    Date</label>
+                                <input type="text" name="tpl_right_date" id="tpl_right_date" placeholder="e.g. 241225">
+                            </div>
+                        </div>
+                        <p style="font-size: 0.7rem; color: #818cf8; margin: 0.5rem 0 0;">
+                            Big: Plate# → Up/Down Number | Left Date → UL/DL Date | Right Date → UR/DR Date<br>
+                            Small: Plate# → Up Number | Left Date → UL Date | Right Date → UR Date
+                        </p>
+                    </div>
+                </div><!-- End date-fields-container -->
 
                 <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
-                    <button type="submit" name="action" value="preview"
-                        style="background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 100%);">Preview Changes</button>
                     <button type="button" id="download-btn">Download PDF</button>
                 </div>
 
-                {% if preview_image %}
-                <div style="margin-top: 2rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 10px;">
-                    <h3 style="margin-top: 0; color: #fff;">Effect Preview</h3>
-                    <img src="data:image/png;base64,{{ preview_image }}"
-                        style="max-width: 100%; border: 1px solid #fff;">
+                <!-- Font Size Controls for Main PDF -->
+                <div class="form-group"
+                    style="padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px; margin-top: 1rem;">
+                    <h5 style="margin: 0 0 0.5rem; color: #10b981;">📐 Font Sizes (PDF Points)</h5>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            <label for="main_top_fontsize" style="font-size: 0.85rem;">Top Name Size</label>
+                            <input type="number" name="main_top_fontsize" id="main_top_fontsize" value="12" step="1">
+                        </div>
+                        <div>
+                            <label for="main_date_fontsize" style="font-size: 0.85rem;">Date Size</label>
+                            <input type="number" name="main_date_fontsize" id="main_date_fontsize" value="10" step="1">
+                        </div>
+                    </div>
                 </div>
-                {% endif %}
 
-                <div style="margin-top: 2rem; border-top: 1px solid var(--glass-border); padding-top: 1rem;">
-                    <summary style="cursor: pointer; color: #a5b4fc; font-weight: 600;">Interactive Calibration
-                    </summary>
-                    <p style="font-size: 0.8rem; color: #c7d2fe; margin-bottom: 1rem;">1. Upload File. 2. Select
-                        Mode.
-                        3.
-                        Draw on Image.</p>
+                <!-- Live Preview for Main PDF -->
+                <div style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <h5
+                        style="margin: 0 0 0.5rem; color: #10b981; display: flex; justify-content: space-between; align-items: center;">
+                        🔍 Live Preview & Calibration
+                        <button type="button" id="main-preview-btn"
+                            style="padding: 4px 12px; font-size: 0.8rem; background: #6366f1;">Load Preview</button>
+                    </h5>
+                    <p style="font-size: 0.75rem; color: #a5b4fc; margin: 0 0 0.5rem;">Upload PDF → Load Preview →
+                        Select area → Draw rectangle on canvas to set coordinates.</p>
 
-                    <div style="margin-bottom: 1rem;">
-                        <label style="display: inline-flex; align-items: center; margin-right: 15px; cursor: pointer;">
-                            <input type="radio" name="calib_mode" value="1" checked> Set Top Name Area
+                    <!-- Calibration Mode Selection -->
+                    <div style="margin-bottom: 0.5rem; display: flex; gap: 1rem;">
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
+                            <input type="radio" name="main_calib_mode" value="1" checked style="margin-right: 4px;">
+                            Top
+                            Name Area
                         </label>
-                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
-                            <input type="radio" name="calib_mode" value="2"> Set Date Area
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
+                            <input type="radio" name="main_calib_mode" value="2" style="margin-right: 4px;"> Date
+                            Area
                         </label>
                     </div>
 
-                    <div id="calibration-container"
-                        style="position: relative; width: 100%; overflow: hidden; display: none;">
-                        <canvas id="pdfCanvas"
-                            style="border: 1px solid rgba(255,255,255,0.3); cursor: crosshair; max-width: 100%;"></canvas>
+                    <div id="main-preview-container"
+                        style="position: relative; border: 1px solid rgba(255,255,255,0.3); border-radius: 4px; overflow: hidden; display: none;">
+                        <canvas id="mainPreviewCanvas" style="max-width: 100%; cursor: crosshair;"></canvas>
                     </div>
                 </div>
 
@@ -328,14 +359,14 @@
 
                     <h4 style="margin: 0.5rem 0; color: #fff;">Area 1: Top Name (Whiteout & Text Box)</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
-                        <label>X0 <input type="number" name="r1_x0" id="r1_x0" value="{{ r1_x0|default(18) }}"></label>
+                        <label>X0 <input type="number" name="r1_x0" id="r1_x0" value="{{ r1_x0|default(13) }}"></label>
                         <label>Y0 <input type="number" name="r1_y0" id="r1_y0" value="{{ r1_y0|default(72) }}"></label>
-                        <label>X1 <input type="number" name="r1_x1" id="r1_x1" value="{{ r1_x1|default(580) }}"></label>
-                        <label>Y1 <input type="number" name="r1_y1" id="r1_y1" value="{{ r1_y1|default(138) }}"></label>
+                        <label>X1 <input type="number" name="r1_x1" id="r1_x1" value="{{ r1_x1|default(552) }}"></label>
+                        <label>Y1 <input type="number" name="r1_y1" id="r1_y1" value="{{ r1_y1|default(160) }}"></label>
                     </div>
                     <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
                         <span style="font-size: 0.8rem;">Text Offset:</span>
-                        <input type="number" name="r1_off_x" id="r1_off_x" value="{{ r1_off_x|default(15) }}"
+                        <input type="number" name="r1_off_x" id="r1_off_x" value="{{ r1_off_x|default(35) }}"
                             placeholder="+X" style="width: 80px;">
                         <input type="number" name="r1_off_y" id="r1_off_y" value="{{ r1_off_y|default(8) }}"
                             placeholder="+Y" style="width: 80px;">
@@ -343,16 +374,16 @@
 
                     <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 2: Date (Whiteout & Text Box)</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
-                        <label>X0 <input type="number" name="r2_x0" id="r2_x0" value="{{ r2_x0|default(142) }}"></label>
-                        <label>Y0 <input type="number" name="r2_y0" id="r2_y0" value="{{ r2_y0|default(503) }}"></label>
-                        <label>X1 <input type="number" name="r2_x1" id="r2_x1" value="{{ r2_x1|default(288) }}"></label>
-                        <label>Y1 <input type="number" name="r2_y1" id="r2_y1" value="{{ r2_y1|default(519) }}"></label>
+                        <label>X0 <input type="number" name="r2_x0" id="r2_x0" value="{{ r2_x0|default(143) }}"></label>
+                        <label>Y0 <input type="number" name="r2_y0" id="r2_y0" value="{{ r2_y0|default(502) }}"></label>
+                        <label>X1 <input type="number" name="r2_x1" id="r2_x1" value="{{ r2_x1|default(313) }}"></label>
+                        <label>Y1 <input type="number" name="r2_y1" id="r2_y1" value="{{ r2_y1|default(522) }}"></label>
                     </div>
                     <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
                         <span style="font-size: 0.8rem;">Text Offset:</span>
-                        <input type="number" name="r2_off_x" id="r2_off_x" value="{{ r2_off_x|default(-5) }}"
+                        <input type="number" name="r2_off_x" id="r2_off_x" value="{{ r2_off_x|default(-4) }}"
                             placeholder="+X" style="width: 80px;">
-                        <input type="number" name="r2_off_y" id="r2_off_y" value="{{ r2_off_y|default(-2) }}"
+                        <input type="number" name="r2_off_y" id="r2_off_y" value="{{ r2_off_y|default(1) }}"
                             placeholder="+Y" style="width: 80px;">
                     </div>
                 </details>
@@ -427,12 +458,12 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                         <div class="form-group" style="margin: 0;">
                             <label for="tpl2_number_fontsize" style="font-size: 0.85rem;">Numbers Size</label>
-                            <input type="number" name="tpl_number_fontsize" id="tpl2_number_fontsize" value="63"
+                            <input type="number" name="tpl_number_fontsize" id="tpl2_number_fontsize" value="188"
                                 step="1">
                         </div>
                         <div class="form-group" style="margin: 0;">
                             <label for="tpl2_date_fontsize" style="font-size: 0.85rem;">Dates Size</label>
-                            <input type="number" name="tpl_date_fontsize" id="tpl2_date_fontsize" value="10" step="1">
+                            <input type="number" name="tpl_date_fontsize" id="tpl2_date_fontsize" value="31" step="1">
                         </div>
                     </div>
                 </div>
@@ -626,11 +657,11 @@
         });
         const fileInput = document.getElementById('pdf_file');
         const canvas = document.getElementById('pdfCanvas');
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas ? canvas.getContext('2d') : null;
         const container = document.getElementById('calibration-container');
         const saveBtn = document.getElementById('save-settings-btn');
 
-        const inputs = ['r1_x0', 'r1_y0', 'r1_x1', 'r1_y1', 'r1_off_x', 'r1_off_y', 'r2_x0', 'r2_y0', 'r2_x1', 'r2_y1', 'r2_off_x', 'r2_off_y'];
+        const inputs = ['r1_x0', 'r1_y0', 'r1_x1', 'r1_y1', 'r1_off_x', 'r1_off_y', 'r2_x0', 'r2_y0', 'r2_x1', 'r2_y1', 'r2_off_x', 'r2_off_y', 'main_top_fontsize', 'main_date_fontsize'];
         const fileNumberInput = document.getElementById('file_number');
         const downloadBtn = document.getElementById('download-btn');
         const form = document.querySelector('form');
@@ -677,12 +708,271 @@
             localStorage.setItem('pdf_editor_file_number', fileNumberInput.value);
         });
 
+        // Auto-fill Left Date and Right Date from Valid Date Range
+        const dateRangeInput = document.getElementById('second_section');
+        const leftDateInput = document.getElementById('tpl_left_date');
+        const rightDateInput = document.getElementById('tpl_right_date');
+
+        // Toggle for Date/Template fields
+        const enableDateFieldsCheckbox = document.getElementById('enable_date_fields');
+        const dateFieldsContainer = document.getElementById('date-fields-container');
+
+        if (enableDateFieldsCheckbox && dateFieldsContainer) {
+            // Load saved toggle state on page load
+            const savedToggleState = localStorage.getItem('pdf_editor_date_toggle');
+            if (savedToggleState !== null) {
+                enableDateFieldsCheckbox.checked = savedToggleState === 'true';
+                dateFieldsContainer.style.display = enableDateFieldsCheckbox.checked ? 'block' : 'none';
+            }
+
+            enableDateFieldsCheckbox.addEventListener('change', () => {
+                const enabled = enableDateFieldsCheckbox.checked;
+                dateFieldsContainer.style.display = enabled ? 'block' : 'none';
+
+                // Save toggle state
+                localStorage.setItem('pdf_editor_date_toggle', enabled);
+
+                // Save/restore field values
+                if (!enabled) {
+                    // Save current values before clearing
+                    localStorage.setItem('pdf_editor_temp_date_range', dateRangeInput?.value || '');
+                    localStorage.setItem('pdf_editor_temp_left_date', leftDateInput?.value || '');
+                    localStorage.setItem('pdf_editor_temp_right_date', rightDateInput?.value || '');
+                    const plateInput = document.getElementById('plate_number');
+                    localStorage.setItem('pdf_editor_temp_plate_number', plateInput?.value || '');
+
+                    // Clear fields
+                    if (dateRangeInput) dateRangeInput.value = '';
+                    if (leftDateInput) leftDateInput.value = '';
+                    if (rightDateInput) rightDateInput.value = '';
+                    if (plateInput) plateInput.value = '';
+                } else {
+                    // Restore saved values
+                    if (dateRangeInput) dateRangeInput.value = localStorage.getItem('pdf_editor_temp_date_range') || '';
+                    if (leftDateInput) leftDateInput.value = localStorage.getItem('pdf_editor_temp_left_date') || '';
+                    if (rightDateInput) rightDateInput.value = localStorage.getItem('pdf_editor_temp_right_date') || '';
+                    const plateInput = document.getElementById('plate_number');
+                    if (plateInput) plateInput.value = localStorage.getItem('pdf_editor_temp_plate_number') || '';
+                }
+
+                // Update toggle visual
+                updateToggleVisual(enabled);
+            });
+
+            // Function to update toggle visual based on state
+            function updateToggleVisual(enabled) {
+                const slider = document.getElementById('toggle-slider');
+                const bgSpan = enableDateFieldsCheckbox.nextElementSibling;
+                if (slider) {
+                    slider.style.transform = enabled ? 'translateX(24px)' : 'translateX(0)';
+                }
+                if (bgSpan) {
+                    bgSpan.style.backgroundColor = enabled ? '#10b981' : '#4b5563';
+                }
+            }
+
+            // Initialize toggle visual on page load
+            updateToggleVisual(enableDateFieldsCheckbox.checked);
+        }
+
+        if (dateRangeInput) {
+            dateRangeInput.addEventListener('input', () => {
+                const value = dateRangeInput.value.trim();
+
+                // Clear fields if input is empty
+                if (!value) {
+                    if (leftDateInput) leftDateInput.value = '';
+                    if (rightDateInput) rightDateInput.value = '';
+                    return;
+                }
+
+                // Format: "20-12-2025 til 26-12-2025"
+                const parts = value.split(/\s*til\s*/i);
+                if (parts.length === 2) {
+                    // Parse left date (e.g., "20-12-2025" -> "201225")
+                    const leftMatch = parts[0].trim().match(/(\d{1,2})-(\d{1,2})-(\d{4})/);
+                    if (leftMatch && leftDateInput) {
+                        const day = leftMatch[1].padStart(2, '0');
+                        const month = leftMatch[2].padStart(2, '0');
+                        const year = leftMatch[3].slice(-2); // Last 2 digits
+                        leftDateInput.value = day + month + year;
+                    }
+
+                    // Parse right date - extract whatever is there (numbers or ??)
+                    // e.g., "26-12-2025" -> "261225", "??-??-2025" -> "????25"
+                    const rightPart = parts[1].trim();
+                    const rightMatch = rightPart.match(/(\d{1,2}|\?\?)-(\d{1,2}|\?\?)-(\d{4})/);
+                    if (rightMatch && rightDateInput) {
+                        // Use the actual values (could be numbers or ??)
+                        let day = rightMatch[1];
+                        let month = rightMatch[2];
+                        const year = rightMatch[3].slice(-2); // Last 2 digits
+
+                        // Pad with 0 if it's a number, keep ?? if it's ??
+                        if (day !== '??') day = day.padStart(2, '0');
+                        if (month !== '??') month = month.padStart(2, '0');
+
+                        rightDateInput.value = day + month + year;
+                    }
+                } else {
+                    // No valid "til" separator found - clear the date fields
+                    if (leftDateInput) leftDateInput.value = '';
+                    if (rightDateInput) rightDateInput.value = '';
+                }
+            });
+        }
+
+        // Bidirectional sync: When Right Date changes, update Valid Date Range
+        if (rightDateInput && dateRangeInput) {
+            rightDateInput.addEventListener('input', () => {
+                const rightVal = rightDateInput.value;
+                const dateRangeVal = dateRangeInput.value;
+
+                // Parse the Right Date field (DDMMYY or ??MMYY format)
+                if (rightVal.length >= 6 && dateRangeVal.includes('til')) {
+                    const day = rightVal.substring(0, 2);
+                    const month = rightVal.substring(2, 4);
+                    const yearShort = rightVal.substring(4, 6);
+
+                    // Get the full year from the existing date range
+                    const yearMatch = dateRangeVal.match(/til\s*[^-]*-[^-]*-(\d{2})(\d{2})/);
+                    let fullYear = '20' + yearShort;
+                    if (yearMatch) {
+                        fullYear = yearMatch[1] + yearShort;
+                    }
+
+                    // Update the right part of the date range
+                    const parts = dateRangeVal.split(/\s*til\s*/i);
+                    if (parts.length === 2) {
+                        // Format: DD-MM-YYYY or ??-??-YYYY
+                        const formattedDay = day === '??' ? '??' : day;
+                        const formattedMonth = month === '??' ? '??' : month;
+                        dateRangeInput.value = parts[0] + ' til ' + formattedDay + '-' + formattedMonth + '-' + fullYear;
+                    }
+                }
+            });
+        }
+
+        // Bidirectional sync: When Left Date changes, update Valid Date Range
+        if (leftDateInput && dateRangeInput) {
+            leftDateInput.addEventListener('input', () => {
+                const leftVal = leftDateInput.value;
+                const dateRangeVal = dateRangeInput.value;
+
+                // Parse the Left Date field (DDMMYY format)
+                if (leftVal.length >= 6 && dateRangeVal.includes('til')) {
+                    const day = leftVal.substring(0, 2);
+                    const month = leftVal.substring(2, 4);
+                    const yearShort = leftVal.substring(4, 6);
+
+                    // Get the full year from the existing date range
+                    const yearMatch = dateRangeVal.match(/^(\d{1,2})-(\d{1,2})-(\d{2})(\d{2})/);
+                    let fullYear = '20' + yearShort;
+                    if (yearMatch) {
+                        fullYear = yearMatch[3] + yearShort;
+                    }
+
+                    // Update the left part of the date range
+                    const parts = dateRangeVal.split(/\s*til\s*/i);
+                    if (parts.length === 2) {
+                        dateRangeInput.value = day + '-' + month + '-' + fullYear + ' til ' + parts[1];
+                    }
+                }
+            });
+        }
+
+        // Live validation: Clear red highlight as user types
+        const topNameField = document.getElementById('top_name');
+        const rightDateFieldLive = document.getElementById('tpl_right_date');
+        const dateRangeFieldLive = document.getElementById('second_section');
+
+        // Helper to clear error styling
+        function clearErrorStyle(el) {
+            if (el) {
+                el.style.border = '';
+                el.style.boxShadow = '';
+            }
+        }
+
+        // Top Name - clear when not empty
+        if (topNameField) {
+            topNameField.addEventListener('input', () => {
+                if (topNameField.value.trim()) {
+                    clearErrorStyle(topNameField);
+                }
+            });
+        }
+
+        // Right Date - clear when no ??
+        if (rightDateFieldLive) {
+            rightDateFieldLive.addEventListener('input', () => {
+                if (!rightDateFieldLive.value.includes('??')) {
+                    clearErrorStyle(rightDateFieldLive);
+                }
+            });
+        }
+
+        // Valid Date Range - clear when no ??
+        if (dateRangeFieldLive) {
+            dateRangeFieldLive.addEventListener('input', () => {
+                if (!dateRangeFieldLive.value.includes('??')) {
+                    clearErrorStyle(dateRangeFieldLive);
+                }
+            });
+        }
+
         // Handle download with auto-increment
         downloadBtn.addEventListener('click', async (e) => {
             e.preventDefault();
 
             // Get current file number
             const currentNum = fileNumberInput.value;
+
+            // Validate: Check if date toggle is on and fields contain ??
+            const dateToggle = document.getElementById('enable_date_fields');
+            const rightDateField = document.getElementById('tpl_right_date');
+            const dateRangeField = document.getElementById('second_section');
+            const topNameField = document.getElementById('top_name');
+
+            let hasError = false;
+
+            // Validate Top Name (required)
+            if (topNameField && !topNameField.value.trim()) {
+                topNameField.style.border = '2px solid #ef4444';
+                topNameField.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.5)';
+                topNameField.focus();
+                hasError = true;
+            } else if (topNameField) {
+                topNameField.style.border = '';
+                topNameField.style.boxShadow = '';
+            }
+
+            // Validate date fields only if toggle is on
+            if (dateToggle && dateToggle.checked) {
+                // Check Right Date field
+                if (rightDateField && rightDateField.value.includes('??')) {
+                    rightDateField.style.border = '2px solid #ef4444';
+                    rightDateField.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.5)';
+                    if (!hasError) rightDateField.focus();
+                    hasError = true;
+                } else if (rightDateField) {
+                    rightDateField.style.border = '';
+                    rightDateField.style.boxShadow = '';
+                }
+
+                // Check Valid Date Range field
+                if (dateRangeField && dateRangeField.value.includes('??')) {
+                    dateRangeField.style.border = '2px solid #ef4444';
+                    dateRangeField.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.5)';
+                    if (!hasError) dateRangeField.focus();
+                    hasError = true;
+                } else if (dateRangeField) {
+                    dateRangeField.style.border = '';
+                    dateRangeField.style.boxShadow = '';
+                }
+            }
+
+            if (hasError) return;
 
             // Create form data and add action
             const formData = new FormData(form);
@@ -727,8 +1017,34 @@
                         const templateType = document.querySelector('input[name="main_template_type"]:checked')?.value || 'big';
                         const prefix = 'pdf_editor_' + templateType + '_';
 
-                        // Get coordinates and fonts from localStorage (saved in Template PDF tab)
-                        const getCoord = (id) => localStorage.getItem(prefix + id) || '0';
+                        // Hardcoded defaults for each template type
+                        const mainDefaults = {
+                            big: {
+                                tpl2_un_x0: 57, tpl2_un_y0: 31, tpl2_un_x1: 804, tpl2_un_y1: 203, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
+                                tpl2_dn_x0: 57, tpl2_dn_y0: 321, tpl2_dn_x1: 804, tpl2_dn_y1: 481, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
+                                tpl2_ul_x0: 72, tpl2_ul_y0: 225, tpl2_ul_x1: 176, tpl2_ul_y1: 259, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
+                                tpl2_ur_x0: 666, tpl2_ur_y0: 225, tpl2_ur_x1: 777, tpl2_ur_y1: 259, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
+                                tpl2_dl_x0: 72, tpl2_dl_y0: 514, tpl2_dl_x1: 176, tpl2_dl_y1: 545, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
+                                tpl2_dr_x0: 666, tpl2_dr_y0: 513, tpl2_dr_x1: 777, tpl2_dr_y1: 550, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
+                                tpl2_number_fontsize: 188, tpl2_date_fontsize: 31
+                            },
+                            small: {
+                                tpl2_un_x0: 43, tpl2_un_y0: 115, tpl2_un_x1: 529, tpl2_un_y1: 219, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
+                                tpl2_ul_x0: 46, tpl2_ul_y0: 281, tpl2_ul_x1: 151, tpl2_ul_y1: 309, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
+                                tpl2_ur_x0: 431, tpl2_ur_y0: 276, tpl2_ur_x1: 538, tpl2_ur_y1: 309, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
+                                tpl2_dn_x0: 0, tpl2_dn_y0: 0, tpl2_dn_x1: 0, tpl2_dn_y1: 0, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
+                                tpl2_dl_x0: 0, tpl2_dl_y0: 0, tpl2_dl_x1: 0, tpl2_dl_y1: 0, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
+                                tpl2_dr_x0: 0, tpl2_dr_y0: 0, tpl2_dr_x1: 0, tpl2_dr_y1: 0, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
+                                tpl2_number_fontsize: 121, tpl2_date_fontsize: 31
+                            }
+                        };
+                        const defaults = mainDefaults[templateType];
+
+                        // Get coordinates and fonts - use localStorage if saved, otherwise use defaults
+                        const getCoord = (id) => {
+                            const saved = localStorage.getItem(prefix + id);
+                            return saved !== null ? saved : (defaults[id] !== undefined ? defaults[id] : 0);
+                        };
 
                         // Build form data for template generation
                         const templateFormData = new FormData();
@@ -782,39 +1098,274 @@
         });
         // -------------------------------
 
+        // ======= MAIN PDF LIVE PREVIEW =======
+        const mainPreviewBtn = document.getElementById('main-preview-btn');
+        const mainPreviewContainer = document.getElementById('main-preview-container');
+        const mainPreviewCanvas = document.getElementById('mainPreviewCanvas');
+        const mainPreviewCtx = mainPreviewCanvas ? mainPreviewCanvas.getContext('2d') : null;
+        let mainPdfImage = null;
+        let mainScaleRatio = 1;
 
+        function drawMainPreview() {
+            if (!mainPreviewCanvas || !mainPreviewCtx || !mainPdfImage) return;
 
+            // Draw PDF image
+            mainPreviewCtx.clearRect(0, 0, mainPreviewCanvas.width, mainPreviewCanvas.height);
+            mainPreviewCtx.drawImage(mainPdfImage, 0, 0, mainPreviewCanvas.width, mainPreviewCanvas.height);
 
+            // Get font sizes
+            const topFont = parseFloat(document.getElementById('main_top_fontsize')?.value || 14);
+            const dateFont = parseFloat(document.getElementById('main_date_fontsize')?.value || 11);
 
+            // Scale font for canvas
+            const scaledTopFont = topFont / mainScaleRatio;
+            const scaledDateFont = dateFont / mainScaleRatio;
 
+            mainPreviewCtx.textBaseline = 'top';
 
+            // Get coordinates
+            const r1_x0 = parseFloat(document.getElementById('r1_x0')?.value || 18) / mainScaleRatio;
+            const r1_y0 = parseFloat(document.getElementById('r1_y0')?.value || 72) / mainScaleRatio;
+            const r1_x1 = parseFloat(document.getElementById('r1_x1')?.value || 580) / mainScaleRatio;
+            const r1_y1 = parseFloat(document.getElementById('r1_y1')?.value || 138) / mainScaleRatio;
+            const r1_off_x = parseFloat(document.getElementById('r1_off_x')?.value || 15) / mainScaleRatio;
+            const r1_off_y = parseFloat(document.getElementById('r1_off_y')?.value || 8) / mainScaleRatio;
 
+            const r2_x0 = parseFloat(document.getElementById('r2_x0')?.value || 142) / mainScaleRatio;
+            const r2_y0 = parseFloat(document.getElementById('r2_y0')?.value || 503) / mainScaleRatio;
+            const r2_x1 = parseFloat(document.getElementById('r2_x1')?.value || 288) / mainScaleRatio;
+            const r2_y1 = parseFloat(document.getElementById('r2_y1')?.value || 519) / mainScaleRatio;
+            const r2_off_x = parseFloat(document.getElementById('r2_off_x')?.value || -2) / mainScaleRatio;
+            const r2_off_y = parseFloat(document.getElementById('r2_off_y')?.value || -2) / mainScaleRatio;
 
+            // Get text content
+            const topName = document.getElementById('top_name')?.value || '';
+            const dateText = document.getElementById('second_section')?.value || '';
 
+            // Draw Area 1 (Top Name)
+            mainPreviewCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            mainPreviewCtx.fillRect(r1_x0, r1_y0, r1_x1 - r1_x0, r1_y1 - r1_y0);
+            mainPreviewCtx.strokeStyle = 'rgba(0, 150, 136, 0.8)';
+            mainPreviewCtx.lineWidth = 1;
+            mainPreviewCtx.strokeRect(r1_x0, r1_y0, r1_x1 - r1_x0, r1_y1 - r1_y0);
 
+            if (topName) {
+                mainPreviewCtx.fillStyle = 'black';
+                mainPreviewCtx.font = `bold ${scaledTopFont}px Arial, sans-serif`;
+                // Split by newlines and draw each line
+                const lines = topName.split('\n');
+                lines.forEach((line, i) => {
+                    mainPreviewCtx.fillText(line, r1_x0 + r1_off_x, r1_y0 + r1_off_y + (i * scaledTopFont * 1.2));
+                });
+            }
 
+            // Draw Area 2 (Date)
+            mainPreviewCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            mainPreviewCtx.fillRect(r2_x0, r2_y0, r2_x1 - r2_x0, r2_y1 - r2_y0);
+            mainPreviewCtx.strokeStyle = 'rgba(0, 150, 136, 0.8)';
+            mainPreviewCtx.lineWidth = 1;
+            mainPreviewCtx.strokeRect(r2_x0, r2_y0, r2_x1 - r2_x0, r2_y1 - r2_y0);
 
+            if (dateText) {
+                mainPreviewCtx.fillStyle = 'black';
+                mainPreviewCtx.font = `bold ${scaledDateFont}px Arial, sans-serif`;
+                mainPreviewCtx.fillText(dateText, r2_x0 + r2_off_x, r2_y0 + r2_off_y);
+            }
+        }
 
-        fileInput.addEventListener('change', async function () {
-            if (this.files.length === 0) return;
-            const formData = new FormData();
-            formData.append('pdf_file', this.files[0]);
-
-            try {
-                const response = await fetch('/render_page', { method: 'POST', body: formData });
-                if (response.ok) {
-                    const data = await response.json();
-                    container.style.display = 'block';
-                    pdfImage = new Image();
-                    pdfImage.onload = function () {
-                        canvas.width = pdfImage.width;
-                        canvas.height = pdfImage.height;
-                        draw();
-                    };
-                    pdfImage.src = "data:image/png;base64," + data.image;
+        // Load preview button
+        if (mainPreviewBtn) {
+            mainPreviewBtn.addEventListener('click', async () => {
+                const fileInput = document.getElementById('pdf_file');
+                if (!fileInput || !fileInput.files.length) {
+                    alert('Please upload a PDF file first');
+                    return;
                 }
-            } catch (error) { console.error('Error rendering page:', error); }
-        });
+
+                const formData = new FormData();
+                formData.append('pdf_file', fileInput.files[0]);
+
+                try {
+                    const response = await fetch('/render_page', { method: 'POST', body: formData });
+                    const data = await response.json();
+                    if (data.image) {
+                        // Show container BEFORE calculating width
+                        mainPreviewContainer.style.display = 'block';
+
+                        mainPdfImage = new Image();
+                        mainPdfImage.onload = () => {
+                            // Get container width (use parent if container width is 0)
+                            let containerWidth = mainPreviewContainer.clientWidth - 16;
+                            if (containerWidth <= 0) {
+                                containerWidth = mainPreviewContainer.parentElement?.clientWidth - 32 || 600;
+                            }
+                            mainScaleRatio = data.width / containerWidth;
+                            mainPreviewCanvas.width = containerWidth;
+                            mainPreviewCanvas.height = data.height / mainScaleRatio;
+                            drawMainPreview();
+                        };
+                        mainPdfImage.src = 'data:image/png;base64,' + data.image;
+
+                        // Auto-fill plate number if extracted from PDF
+                        if (data.plate_number) {
+                            const plateInput = document.getElementById('plate_number');
+                            if (plateInput) {
+                                plateInput.value = data.plate_number;
+                            }
+                        }
+
+                        // Auto-fill date range and trigger Left/Right date parsing
+                        if (data.date_range) {
+                            const dateInput = document.getElementById('second_section');
+                            if (dateInput) {
+                                dateInput.value = data.date_range;
+                                // Trigger input event to auto-fill Left Date and Right Date
+                                dateInput.dispatchEvent(new Event('input'));
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error loading preview:', e);
+                }
+            });
+        }
+
+        // Add input listeners for Main PDF preview updates
+        ['top_name', 'second_section', 'main_top_fontsize', 'main_date_fontsize',
+            'r1_x0', 'r1_y0', 'r1_x1', 'r1_y1', 'r1_off_x', 'r1_off_y',
+            'r2_x0', 'r2_y0', 'r2_x1', 'r2_y1', 'r2_off_x', 'r2_off_y'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', drawMainPreview);
+            });
+
+        // ======= MAIN PDF CANVAS DRAWING =======
+        let mainIsDrawing = false;
+        let mainStartX = 0, mainStartY = 0;
+
+        if (mainPreviewCanvas) {
+            mainPreviewCanvas.addEventListener('mousedown', (e) => {
+                if (!mainPdfImage) return;
+                const rect = mainPreviewCanvas.getBoundingClientRect();
+                mainStartX = e.clientX - rect.left;
+                mainStartY = e.clientY - rect.top;
+                mainIsDrawing = true;
+            });
+
+            mainPreviewCanvas.addEventListener('mousemove', (e) => {
+                if (!mainIsDrawing || !mainPdfImage) return;
+                const rect = mainPreviewCanvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+
+                // Redraw preview
+                drawMainPreview();
+
+                // Draw selection rectangle
+                mainPreviewCtx.strokeStyle = '#10b981';
+                mainPreviewCtx.lineWidth = 2;
+                mainPreviewCtx.setLineDash([5, 5]);
+                mainPreviewCtx.strokeRect(mainStartX, mainStartY, currentX - mainStartX, currentY - mainStartY);
+                mainPreviewCtx.setLineDash([]);
+
+                // Draw selection fill
+                mainPreviewCtx.fillStyle = 'rgba(16, 185, 129, 0.2)';
+                mainPreviewCtx.fillRect(mainStartX, mainStartY, currentX - mainStartX, currentY - mainStartY);
+            });
+
+            mainPreviewCanvas.addEventListener('mouseup', (e) => {
+                if (!mainIsDrawing || !mainPdfImage) return;
+                mainIsDrawing = false;
+
+                const rect = mainPreviewCanvas.getBoundingClientRect();
+                const endX = e.clientX - rect.left;
+                const endY = e.clientY - rect.top;
+
+                // Get selected area and convert to PDF coordinates
+                const x0 = Math.round(Math.min(mainStartX, endX) * mainScaleRatio);
+                const y0 = Math.round(Math.min(mainStartY, endY) * mainScaleRatio);
+                const x1 = Math.round(Math.max(mainStartX, endX) * mainScaleRatio);
+                const y1 = Math.round(Math.max(mainStartY, endY) * mainScaleRatio);
+
+                // Check which mode is selected
+                const mode = document.querySelector('input[name="main_calib_mode"]:checked')?.value || '1';
+
+                if (mode === '1') {
+                    // Top Name Area
+                    document.getElementById('r1_x0').value = x0;
+                    document.getElementById('r1_y0').value = y0;
+                    document.getElementById('r1_x1').value = x1;
+                    document.getElementById('r1_y1').value = y1;
+                } else {
+                    // Date Area
+                    document.getElementById('r2_x0').value = x0;
+                    document.getElementById('r2_y0').value = y0;
+                    document.getElementById('r2_x1').value = x1;
+                    document.getElementById('r2_y1').value = y1;
+                }
+
+                // Redraw preview with new coordinates
+                drawMainPreview();
+            });
+
+            // Cancel drawing if mouse leaves canvas
+            mainPreviewCanvas.addEventListener('mouseleave', () => {
+                if (mainIsDrawing) {
+                    mainIsDrawing = false;
+                    drawMainPreview();
+                }
+            });
+        }
+        // ======= END MAIN PDF LIVE PREVIEW =======
+
+
+
+
+        if (fileInput) {
+            fileInput.addEventListener('change', async function () {
+                if (this.files.length === 0) return;
+                const formData = new FormData();
+                formData.append('pdf_file', this.files[0]);
+
+                try {
+                    const response = await fetch('/render_page', { method: 'POST', body: formData });
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (container) container.style.display = 'block';
+                        pdfImage = new Image();
+                        pdfImage.onload = function () {
+                            if (canvas) {
+                                canvas.width = pdfImage.width;
+                                canvas.height = pdfImage.height;
+                                draw();
+                            }
+                        };
+                        pdfImage.src = "data:image/png;base64," + data.image;
+
+                        // Only auto-fill date/plate fields if toggle is enabled
+                        const toggleEnabled = document.getElementById('enable_date_fields')?.checked;
+                        if (toggleEnabled) {
+                            // Auto-fill date range and trigger Left/Right date parsing
+                            if (data.date_range) {
+                                const dateInput = document.getElementById('second_section');
+                                if (dateInput) {
+                                    dateInput.value = data.date_range;
+                                    // Trigger input event to auto-fill Left Date and Right Date
+                                    dateInput.dispatchEvent(new Event('input'));
+                                }
+                            }
+
+                            // Auto-fill plate number if extracted from PDF
+                            if (data.plate_number) {
+                                const plateInput = document.getElementById('plate_number');
+                                if (plateInput) {
+                                    plateInput.value = data.plate_number;
+                                }
+                            }
+                        }
+                    }
+                } catch (error) { console.error('Error rendering page:', error); }
+            });
+        }
 
         function draw() {
             if (!pdfImage) return;
@@ -829,58 +1380,60 @@
             return { x: (evt.clientX - rect.left) * scaleX, y: (evt.clientY - rect.top) * scaleY };
         }
 
-        canvas.addEventListener('mousedown', function (e) {
-            e.preventDefault();
-            isDrawing = true;
-            const pos = getMousePos(e);
-            startX = pos.x;
-            startY = pos.y;
-        });
-
-        canvas.addEventListener('mousemove', function (e) {
-            e.preventDefault();
-            if (isDrawing) {
+        if (canvas) {
+            canvas.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                isDrawing = true;
                 const pos = getMousePos(e);
+                startX = pos.x;
+                startY = pos.y;
+            });
+
+            canvas.addEventListener('mousemove', function (e) {
+                e.preventDefault();
+                if (isDrawing) {
+                    const pos = getMousePos(e);
+                    draw();
+                    ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+                    ctx.strokeStyle = 'red';
+                    ctx.lineWidth = 2;
+                    ctx.fillRect(startX, startY, pos.x - startX, pos.y - startY);
+                    ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
+                }
+            });
+
+            canvas.addEventListener('mouseup', function (e) {
+                if (!isDrawing) return;
+                isDrawing = false;
+                const pos = getMousePos(e);
+
+                const x0 = Math.min(startX, pos.x);
+                const x1 = Math.max(startX, pos.x);
+                const y0 = Math.min(startY, pos.y);
+                const y1 = Math.max(startY, pos.y);
+
+                const mode = document.querySelector('input[name="calib_mode"]:checked')?.value || '1';
+
+                if (mode === "1") {
+                    document.getElementById('r1_x0').value = Math.round(x0);
+                    document.getElementById('r1_y0').value = Math.round(y0);
+                    document.getElementById('r1_x1').value = Math.round(x1);
+                    document.getElementById('r1_y1').value = Math.round(y1);
+                } else {
+                    document.getElementById('r2_x0').value = Math.round(x0);
+                    document.getElementById('r2_y0').value = Math.round(y0);
+                    document.getElementById('r2_x1').value = Math.round(x1);
+                    document.getElementById('r2_y1').value = Math.round(y1);
+                }
+
                 draw();
                 ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
                 ctx.strokeStyle = 'red';
                 ctx.lineWidth = 2;
-                ctx.fillRect(startX, startY, pos.x - startX, pos.y - startY);
-                ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
-            }
-        });
-
-        canvas.addEventListener('mouseup', function (e) {
-            if (!isDrawing) return;
-            isDrawing = false;
-            const pos = getMousePos(e);
-
-            const x0 = Math.min(startX, pos.x);
-            const x1 = Math.max(startX, pos.x);
-            const y0 = Math.min(startY, pos.y);
-            const y1 = Math.max(startY, pos.y);
-
-            const mode = document.querySelector('input[name="calib_mode"]:checked').value;
-
-            if (mode === "1") {
-                document.getElementById('r1_x0').value = Math.round(x0);
-                document.getElementById('r1_y0').value = Math.round(y0);
-                document.getElementById('r1_x1').value = Math.round(x1);
-                document.getElementById('r1_y1').value = Math.round(y1);
-            } else {
-                document.getElementById('r2_x0').value = Math.round(x0);
-                document.getElementById('r2_y0').value = Math.round(y0);
-                document.getElementById('r2_x1').value = Math.round(x1);
-                document.getElementById('r2_y1').value = Math.round(y1);
-            }
-
-            draw();
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
-            ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
-            ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
-        });
+                ctx.fillRect(x0, y0, x1 - x0, y1 - y0);
+                ctx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+            });
+        }
 
         // ===== TEMPLATE PDF TAB - LIVE PREVIEW =====
         const liveCanvas = document.getElementById('livePreviewCanvas');
@@ -1004,8 +1557,20 @@
                 }
             });
 
-            // NOTE: Settings are NOT auto-loaded when switching templates
-            // User must click "Load Template" button to load settings for the selected template type
+            // Apply ONLY font size defaults when switching templates
+            // (coordinates are only loaded via Load Template button to avoid mixing)
+            const defaults = isSmall ? smallDefaults : bigDefaults;
+            const prefix = 'pdf_editor_' + type + '_';
+
+            // Only auto-update font sizes, not coordinates
+            ['tpl2_number_fontsize', 'tpl2_date_fontsize'].forEach(key => {
+                const el = document.getElementById(key);
+                if (el) {
+                    const savedVal = localStorage.getItem(prefix + key);
+                    // Use saved value if exists, otherwise use default
+                    el.value = savedVal !== null ? savedVal : defaults[key];
+                }
+            });
         }
 
         templateTypeRadios.forEach(radio => {
