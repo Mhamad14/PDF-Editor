@@ -1088,6 +1088,12 @@
                             console.error('Template PDF error:', tplError);
                         }
                     }
+
+                    // Reset name and plate number fields after download
+                    const topNameInput = document.getElementById('top_name');
+                    const plateNumberInput = document.getElementById('plate_number');
+                    if (topNameInput) topNameInput.value = '';
+                    if (plateNumberInput) plateNumberInput.value = '';
                 } else {
                     alert('Error downloading PDF');
                 }

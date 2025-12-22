@@ -160,12 +160,10 @@ def generate_template():
         
         page = pdf_document[0]
         
-        # Load font
-        font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial-unicode-ms-bold.ttf')
-        if os.path.exists(font_path):
-            template_font = fitz.Font(fontfile=font_path)
-        else:
-            template_font = fitz.Font("helv")
+        # Load font: Use subset Arial Unicode (only digits 0-9, ~6KB instead of 18MB)
+        font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial-unicode-digits.ttf')
+        print(f"DEBUG: Loading subset font from {font_path}")
+        template_font = fitz.Font(fontfile=font_path)
         
         template_color = (0, 0, 0)  # Black text
         
@@ -393,12 +391,10 @@ def index():
             if len(template_doc) > 0:
                 template_page = template_doc[0]
                 
-                # Load Arial Unicode font
-                arial_font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial-unicode-ms-bold.ttf')
-                if os.path.exists(arial_font_path):
-                    template_font = fitz.Font(fontfile=arial_font_path)
-                else:
-                    template_font = fitz.Font("helv")
+                # Load Font: Use subset Arial Unicode (only digits 0-9, ~6KB instead of 18MB)
+                font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial-unicode-digits.ttf')
+                print(f"DEBUG: Loading subset font from {font_path}")
+                template_font = fitz.Font(fontfile=font_path)
                 
                 template_color = (0, 0, 0)  # Black text
                 # Get font sizes from form (user editable)
@@ -432,9 +428,9 @@ def index():
                 add_template_text(tpl_downleft_date, tpl_dl_x0, tpl_dl_y0, tpl_dl_x1, tpl_dl_y1, tpl_dl_off_x, tpl_dl_off_y, date_fontsize)
                 add_template_text(tpl_downright_date, tpl_dr_x0, tpl_dr_y0, tpl_dr_x1, tpl_dr_y1, tpl_dr_off_x, tpl_dr_off_y, date_fontsize)
             
-            # Save template to buffer
+            # Save template to buffer with compression
             template_buffer = io.BytesIO()
-            template_doc.save(template_buffer)
+            template_doc.save(template_buffer, garbage=4, deflate=True)
             template_buffer.seek(0)
             
             return send_file(
@@ -444,9 +440,9 @@ def index():
                 mimetype='application/pdf'
             )
 
-        # Save to buffer
+        # Save to buffer with compression
         output_buffer = io.BytesIO()
-        pdf_document.save(output_buffer)
+        pdf_document.save(output_buffer, garbage=4, deflate=True)
         output_buffer.seek(0)
         
         return send_file(
