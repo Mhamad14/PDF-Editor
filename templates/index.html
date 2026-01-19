@@ -855,7 +855,7 @@
                     </div>
                     <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
                         <span style="font-size: 0.8rem;">Text Offset:</span>
-                        <input type="number" name="r1_off_x" id="r1_off_x" value="{{ r1_off_x|default(10) }}"
+                        <input type="number" name="r1_off_x" id="r1_off_x" value="{{ r1_off_x|default(13) }}"
                             placeholder="+X" style="width: 80px;">
                         <input type="number" name="r1_off_y" id="r1_off_y" value="{{ r1_off_y|default(1) }}"
                             placeholder="+Y" style="width: 80px;">
@@ -865,14 +865,14 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
                         <label>X0 <input type="number" name="r2_x0" id="r2_x0" value="{{ r2_x0|default(124) }}"></label>
                         <label>Y0 <input type="number" name="r2_y0" id="r2_y0" value="{{ r2_y0|default(463) }}"></label>
-                        <label>X1 <input type="number" name="r2_x1" id="r2_x1" value="{{ r2_x1|default(257) }}"></label>
+                        <label>X1 <input type="number" name="r2_x1" id="r2_x1" value="{{ r2_x1|default(297) }}"></label>
                         <label>Y1 <input type="number" name="r2_y1" id="r2_y1" value="{{ r2_y1|default(478) }}"></label>
                     </div>
                     <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
                         <span style="font-size: 0.8rem;">Text Offset:</span>
-                        <input type="number" name="r2_off_x" id="r2_off_x" value="{{ r2_off_x|default(6) }}"
+                        <input type="number" name="r2_off_x" id="r2_off_x" value="{{ r2_off_x|default(-5) }}"
                             placeholder="+X" style="width: 80px;">
-                        <input type="number" name="r2_off_y" id="r2_off_y" value="{{ r2_off_y|default(2) }}"
+                        <input type="number" name="r2_off_y" id="r2_off_y" value="{{ r2_off_y|default(-2) }}"
                             placeholder="+Y" style="width: 80px;">
                     </div>
 
@@ -887,7 +887,7 @@
                         <span style="font-size: 0.8rem;">Text Offset:</span>
                         <input type="number" name="r3_off_x" id="r3_off_x" value="{{ r3_off_x|default(-3) }}"
                             placeholder="+X" style="width: 80px;">
-                        <input type="number" name="r3_off_y" id="r3_off_y" value="{{ r3_off_y|default(0) }}"
+                        <input type="number" name="r3_off_y" id="r3_off_y" value="{{ r3_off_y|default(-3) }}"
                             placeholder="+Y" style="width: 80px;">
                     </div>
 
@@ -902,7 +902,7 @@
                         <span style="font-size: 0.8rem;">Text Offset:</span>
                         <input type="number" name="r4_off_x" id="r4_off_x" value="{{ r4_off_x|default(-4) }}"
                             placeholder="+X" style="width: 80px;">
-                        <input type="number" name="r4_off_y" id="r4_off_y" value="{{ r4_off_y|default(0) }}"
+                        <input type="number" name="r4_off_y" id="r4_off_y" value="{{ r4_off_y|default(-5) }}"
                             placeholder="+Y" style="width: 80px;">
                     </div>
 
@@ -924,24 +924,24 @@
                     <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 6: Art (Vehicle Type)</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
                         <label>X0 <input type="number" name="r6_x0" id="r6_x0" value="{{ r6_x0|default(46) }}"></label>
-                        <label>Y0 <input type="number" name="r6_y0" id="r6_y0" value="{{ r6_y0|default(454) }}"></label>
+                        <label>Y0 <input type="number" name="r6_y0" id="r6_y0" value="{{ r6_y0|default(434) }}"></label>
                         <label>X1 <input type="number" name="r6_x1" id="r6_x1" value="{{ r6_x1|default(141) }}"></label>
-                        <label>Y1 <input type="number" name="r6_y1" id="r6_y1" value="{{ r6_y1|default(467) }}"></label>
+                        <label>Y1 <input type="number" name="r6_y1" id="r6_y1" value="{{ r6_y1|default(447) }}"></label>
                     </div>
                     <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
                         <span style="font-size: 0.8rem;">Text Offset:</span>
                         <input type="number" name="r6_off_x" id="r6_off_x" value="{{ r6_off_x|default(-4) }}"
                             placeholder="+X" style="width: 80px;">
-                        <input type="number" name="r6_off_y" id="r6_off_y" value="{{ r6_off_y|default(-4.7) }}"
+                        <input type="number" name="r6_off_y" id="r6_off_y" value="{{ r6_off_y|default(-5.7) }}"
                             placeholder="+Y" style="width: 80px;">
                     </div>
 
                     <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 7: Første gang</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
                         <label>X0 <input type="number" name="r7_x0" id="r7_x0" value="{{ r7_x0|default(116) }}"></label>
-                        <label>Y0 <input type="number" name="r7_y0" id="r7_y0" value="{{ r7_y0|default(463) }}"></label>
+                        <label>Y0 <input type="number" name="r7_y0" id="r7_y0" value="{{ r7_y0|default(448) }}"></label>
                         <label>X1 <input type="number" name="r7_x1" id="r7_x1" value="{{ r7_x1|default(205) }}"></label>
-                        <label>Y1 <input type="number" name="r7_y1" id="r7_y1" value="{{ r7_y1|default(497) }}"></label>
+                        <label>Y1 <input type="number" name="r7_y1" id="r7_y1" value="{{ r7_y1|default(461) }}"></label>
                     </div>
                     <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
                         <span style="font-size: 0.8rem;">Text Offset:</span>
@@ -954,7 +954,7 @@
                     <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 8: Plate Number</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
                         <label>X0 <input type="number" name="r8_x0" id="r8_x0" value="{{ r8_x0|default(132) }}"></label>
-                        <label>Y0 <input type="number" name="r8_y0" id="r8_y0" value="{{ r8_y0|default(301) }}"></label>
+                        <label>Y0 <input type="number" name="r8_y0" id="r8_y0" value="{{ r8_y0|default(337) }}"></label>
                         <label>X1 <input type="number" name="r8_x1" id="r8_x1" value="{{ r8_x1|default(222) }}"></label>
                         <label>Y1 <input type="number" name="r8_y1" id="r8_y1" value="{{ r8_y1|default(354) }}"></label>
                     </div>
@@ -962,7 +962,7 @@
                         <span style="font-size: 0.8rem;">Text Offset:</span>
                         <input type="number" name="r8_off_x" id="r8_off_x" value="{{ r8_off_x|default(-3) }}"
                             placeholder="+X" style="width: 80px;">
-                        <input type="number" name="r8_off_y" id="r8_off_y" value="{{ r8_off_y|default(-4.2) }}"
+                        <input type="number" name="r8_off_y" id="r8_off_y" value="{{ r8_off_y|default(-0.5) }}"
                             placeholder="+Y" style="width: 80px;">
                     </div>
 
