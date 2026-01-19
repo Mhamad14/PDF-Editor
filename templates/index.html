@@ -1312,7 +1312,13 @@
         const enableDateFieldsCheckbox = document.getElementById('enable_date_fields');
         const dateFieldsContainer = document.getElementById('date-fields-container');
 
-        if (enableDateFieldsCheckbox && dateFieldsContainer) {
+        // FORCE SHOW DATE FIELDS
+        if (dateFieldsContainer) {
+            dateFieldsContainer.style.display = 'block';
+        }
+
+        // Disable old toggle logic
+        if (false && enableDateFieldsCheckbox && dateFieldsContainer) {
             // Load saved toggle state on page load
             const savedToggleState = localStorage.getItem('pdf_editor_date_toggle');
             if (savedToggleState !== null) {
