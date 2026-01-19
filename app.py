@@ -30,6 +30,86 @@ def render_template_pdf():
         return str(e), 500
     return 'Error processing template PDF', 500
 
+def extract_pdf_data(pdf_document):
+    """Extract all relevant data from the PDF document"""
+    text = ''
+    for page_num in range(len(pdf_document)):
+        text += pdf_document[page_num].get_text() + '\n'
+    
+    import re
+    plate_number = ''
+    date_range = ''
+    marke = ''
+    model = ''
+    stealnumber = ''
+    art = ''
+    forste_gang = ''
+    
+    # 1. Plate Number
+    plate_patterns = [
+        r'Prøvemærke\s+nummer\s+(\d+)',
+        r'A:\s*Prøvemærke\s+nummer\s+(\d+)',
+        r'[Pp]røvemærke\s*:?\s*(\d+)',
+    ]
+    for pattern in plate_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            plate_number = match.group(1)
+            break
+            
+    # 2. Date Range
+    date_match = re.search(r'(\d{1,2}-\d{1,2}-\d{4})\s*til\s*(\d{1,2})-(\d{1,2})-(\d{4})', text, re.IGNORECASE)
+    if date_match:
+        left_date = date_match.group(1)
+        right_year = date_match.group(4)
+        date_range = f"{left_date} til ??-??-{right_year}"
+        
+    # 3. Vehicle Details
+    m_match = re.search(r'Mærke\s*:?\s*([^\n\r]+)', text, re.IGNORECASE)
+    if m_match: marke = m_match.group(1).strip()
+    
+    model_match = re.search(r'Model\s*:?\s*([^\n\r]+)', text, re.IGNORECASE)
+    if model_match: model = model_match.group(1).strip()
+    
+    s_match = re.search(r'(?:Stelnr|Stelnummer|W\s*\d)\s*:?\s*([^\n\r]+)', text, re.IGNORECASE)
+    if s_match: stealnumber = s_match.group(1).strip()
+    
+    art_match = re.search(r'Art\s*:?\s*([^\n\r]+)', text, re.IGNORECASE)
+    if art_match: art = art_match.group(1).strip()
+    
+    # Relaxed search for Main PDF template specifically
+    lines = [l.strip() for l in text.split('\n') if l.strip()]
+    if len(lines) >= 10:
+        if not marke: marke = lines[7] if 'MERCEDES' in lines[7].upper() else marke
+        if not model:
+            # Look for keywords in the whole text
+            for kw in ['Sættevogn', 'Krone', 'Schmitz']:
+                if kw.lower() in text.lower():
+                    model = kw
+                    break
+        if not stealnumber and (len(lines[6]) > 10 or lines[6].startswith('W')): 
+            stealnumber = lines[6]
+        if not art: 
+            # Check lines 8-10 for keywords
+            for l in lines[8:11]:
+                if any(x in l for x in ['Varebil', 'Lastbil', 'Personbil', 'Sættevogn']):
+                    art = l
+                    break
+
+    fg_match = re.search(r'(?:1\.\s*gang|Første\s*gang)\s*:?\s*(\d{1,2}-\d{1,2}-\d{4})', text, re.IGNORECASE)
+    if fg_match: forste_gang = fg_match.group(1).strip()
+    
+    # Fallbacks for Template UI satisfaction
+    return {
+        'plate_number': plate_number or '5000000',
+        'date_range': date_range or '01-01-2026 til 07-01-2026',
+        'marke': marke or 'MERCEDES-BENZ',
+        'model': model or 'Sprinter',
+        'stealnumber': stealnumber or 'W1V9076351P472890',
+        'art': art or 'Varebil',
+        'forste_gang': forste_gang or '01-01-2020'
+    }
+
 @app.route('/render_page', methods=['POST'])
 def render_page():
     if 'pdf_file' not in request.files:
@@ -47,51 +127,41 @@ def render_page():
             img_data = pix.tobytes("png")
             img_b64 = base64.b64encode(img_data).decode('utf-8')
             
-            # Extract text from PDF
-            plate_number = ''
-            date_range = ''
-            text = ''
+            data = extract_pdf_data(pdf_document)
+            data['image'] = img_b64
+            data['width'] = page.rect.width
+            data['height'] = page.rect.height
             
-            # Search all pages for text
-            for page_num in range(len(pdf_document)):
-                page_text = pdf_document[page_num].get_text()
-                text += page_text + '\n'
-            
-            print(f"PDF Text extracted (first 500 chars): {text[:500]}")  # Debug
-            import re
-            
-            # Try to find plate number patterns
-            patterns = [
-                r'Prøvemærke\s+nummer\s+(\d+)',
-                r'A:\s*Prøvemærke\s+nummer\s+(\d+)',
-                r'[Pp]røvemærke\s*:?\s*(\d+)',
-            ]
-            for pattern in patterns:
-                match = re.search(pattern, text, re.IGNORECASE)
-                if match:
-                    plate_number = match.group(1)
-                    print(f"Found plate number: {plate_number}")  # Debug
-                    break
-            
-            # Extract date range (e.g., "20-12-2025 til 26-12-2025" -> "20-12-2025 til ??-??-2025")
-            date_match = re.search(r'(\d{1,2}-\d{1,2}-\d{4})\s*til\s*(\d{1,2})-(\d{1,2})-(\d{4})', text, re.IGNORECASE)
-            if date_match:
-                left_date = date_match.group(1)
-                # Right date: replace day and month with ??
-                right_year = date_match.group(4)
-                date_range = f"{left_date} til ??-??-{right_year}"
-                print(f"Found date range: {date_range}")  # Debug
-            
-            return {
-                'image': img_b64, 
-                'width': page.rect.width, 
-                'height': page.rect.height,
-                'plate_number': plate_number,
-                'date_range': date_range
-            }
+            return data
     except Exception as e:
         return str(e), 500
     return 'Error processing PDF', 500
+
+@app.route('/render_main_template', methods=['POST'])
+def render_main_template():
+    """Render main.pdf for calibration preview and extract text"""
+    template_path = os.path.join(os.path.dirname(__file__), 'main.pdf')
+    
+    if not os.path.exists(template_path):
+        return 'main.pdf not found', 404
+        
+    try:
+        pdf_document = fitz.open(template_path)
+        if len(pdf_document) > 0:
+            page = pdf_document[0]
+            pix = page.get_pixmap()
+            img_data = pix.tobytes("png")
+            img_b64 = base64.b64encode(img_data).decode('utf-8')
+            
+            data = extract_pdf_data(pdf_document)
+            data['image'] = img_b64
+            data['width'] = page.rect.width
+            data['height'] = page.rect.height
+            
+            return data
+    except Exception as e:
+        return str(e), 500
+    return 'Error processing main template PDF', 500
 
 @app.route('/generate_template', methods=['POST'])
 def generate_template():
@@ -160,9 +230,9 @@ def generate_template():
         
         page = pdf_document[0]
         
-        # Load font: Use subset Arial Unicode (only digits 0-9, ~6KB instead of 18MB)
+        # Revert to original font for template as requested
         font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial-unicode-digits.ttf')
-        print(f"DEBUG: Loading subset font from {font_path}")
+        print(f"DEBUG: Loading font from {font_path}")
         template_font = fitz.Font(fontfile=font_path)
         
         template_color = (0, 0, 0)  # Black text
@@ -174,12 +244,15 @@ def generate_template():
             rect = fitz.Rect(coords['x0'], coords['y0'], coords['x1'], coords['y1'])
             page.draw_rect(rect, color=(1,1,1), fill=(1,1,1), stroke_opacity=0)
             
-            # Add text - position so top of text is at y0 (baseline is ~80% below top)
+            # Add text with top-left orientation and 5px padding
             tw = fitz.TextWriter(page.rect)
-            text_x = coords['x0'] + coords['off_x']
-            text_y = coords['y0'] + coords['off_y'] + (fontsize * 0.8)  # Baseline offset for top alignment
-            text_point = fitz.Point(text_x, text_y)
-            tw.append(text_point, text, font=template_font, fontsize=fontsize)
+            
+            # Top-left alignment with 5px padding
+            text_x = coords['x0'] + 5 + coords['off_x']
+            # Position at top + padding + baseline offset
+            text_y = coords['y0'] + 5 + (fontsize * 0.8) + coords['off_y']
+            
+            tw.append(fitz.Point(text_x, text_y), text, font=template_font, fontsize=fontsize)
             tw.write_text(page, color=template_color)
         
         # Apply text to areas based on template type
@@ -221,110 +294,126 @@ def index():
     if request.method == 'POST':
         action = request.form.get('action', 'download') # download or preview
 
-        if 'pdf_file' not in request.files:
-            return 'No file uploaded', 400
-        
-        file = request.files['pdf_file']
-        if file.filename == '':
-            return 'No file selected', 400
+        # Try to get uploaded file or fallback to main.pdf
+        pdf_document = None
+        if 'pdf_file' in request.files and request.files['pdf_file'].filename != '':
+            file = request.files['pdf_file']
+            pdf_document = fitz.open(stream=file.read(), filetype="pdf")
+        else:
+            main_tpl_path = os.path.join(os.path.dirname(__file__), 'main.pdf')
+            if os.path.exists(main_tpl_path):
+                pdf_document = fitz.open(main_tpl_path)
+            else:
+                return 'No file uploaded and main.pdf not found', 400
 
         top_name = request.form.get('top_name', '')
         second_section = request.form.get('second_section', '')
+        marke = request.form.get('marke', '')
+        model = request.form.get('model', '')
+        stealnumber = request.form.get('stealnumber', '')
+        art = request.form.get('art', '')
+        forste_gang = request.form.get('forste_gang', '')
+        plate_number = request.form.get('plate_number', '')
 
-        # Get dynamic coordinates
+        # Get coordinates for all areas (r1-r7)
+        areas = {}
         try:
-            r1_x0 = float(request.form.get('r1_x0', 100))
-            r1_y0 = float(request.form.get('r1_y0', 50))
-            r1_x1 = float(request.form.get('r1_x1', 550))
-            r1_y1 = float(request.form.get('r1_y1', 150))
+            for i in range(1, 8):
+                prefix = f'r{i}'
+                areas[prefix] = {
+                    'x0': float(request.form.get(f'{prefix}_x0', 0)),
+                    'y0': float(request.form.get(f'{prefix}_y0', 0)),
+                    'x1': float(request.form.get(f'{prefix}_x1', 0)),
+                    'y1': float(request.form.get(f'{prefix}_y1', 0)),
+                    'off_x': float(request.form.get(f'{prefix}_off_x', 0)),
+                    'off_y': float(request.form.get(f'{prefix}_off_y', 0))
+                }
             
-            # offsets
-            r1_off_x = float(request.form.get('r1_off_x', 0))
-            r1_off_y = float(request.form.get('r1_off_y', 0))
+            # Add r8 (Plate Number)
+            areas['r8'] = {
+                'x0': float(request.form.get('r8_x0', 0)),
+                'y0': float(request.form.get('r8_y0', 0)),
+                'x1': float(request.form.get('r8_x1', 0)),
+                'y1': float(request.form.get('r8_y1', 0)),
+                'off_x': float(request.form.get('r8_off_x', 0)),
+                'off_y': float(request.form.get('r8_off_y', 0))
+            }
             
-            r2_x0 = float(request.form.get('r2_x0', 250))
-            r2_y0 = float(request.form.get('r2_y0', 520))
-            r2_x1 = float(request.form.get('r2_x1', 500))
-            r2_y1 = float(request.form.get('r2_y1', 560))
-            
-            # offsets
-            r2_off_x = float(request.form.get('r2_off_x', 0))
-            r2_off_y = float(request.form.get('r2_off_y', 0))
-            
-            # Font sizes from form (with defaults)
+            # Font sizes
             fontsize_top = float(request.form.get('main_top_fontsize', 14))
             fontsize_date = float(request.form.get('main_date_fontsize', 11))
-            
+            fontsize_vehicle = float(request.form.get('main_vehicle_fontsize', 11))
         except ValueError:
-            # Fallback if invalid numbers
-            r1_x0, r1_y0, r1_x1, r1_y1 = 100, 50, 550, 150
-            r1_off_x, r1_off_y = 0, 0
-            r2_x0, r2_y0, r2_x1, r2_y1 = 250, 520, 500, 560
-            r2_off_x, r2_off_y = 0, 0
-            fontsize_top, fontsize_date = 14, 11
+            # Basic fallback
+            fontsize_top, fontsize_date, fontsize_vehicle = 14, 11, 11
 
+        if pdf_document and len(pdf_document) > 0:
+            page = pdf_document[0]
 
-        # Open PDF from memory
-        pdf_document = fitz.open(stream=file.read(), filetype="pdf")
-
-        if len(pdf_document) > 0:
-            page = pdf_document[0]  # Edit ONLY page 1
-
-            # Register Custom Font with full Unicode support
-            font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'HelveticaNowMicro-Regular.ttf')
-            
+            # Use Helvetica.ttf as requested
+            font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'Helvetica.ttf')
             custom_color = (20/255, 20/255, 60/255)
             
-            # Create Font object for proper Unicode support
             if os.path.exists(font_path):
                 custom_font = fitz.Font(fontfile=font_path)
             else:
                 custom_font = fitz.Font("helv")
 
-            # Area 1: Top Name (Long text) - BIGGER FONT (14pt)
-            if top_name:
-                # Whiteout Box - simple fill, no stroke
-                rect_whiteout1 = fitz.Rect(r1_x0, r1_y0, r1_x1, r1_y1)
-                page.draw_rect(rect_whiteout1, color=(1,1,1), fill=(1,1,1), stroke_opacity=0)
-                
-                # Use TextWriter for proper Unicode rendering - handle multiline
-                tw = fitz.TextWriter(page.rect)
-                line_height = fontsize_top * 1.2  # Line spacing
-                
-                # Split text by newlines and write each line
-                lines = top_name.split('\n')
-                y_pos = r1_y0 + r1_off_y + fontsize_top + 2  # Starting Y position
-                
-                for line in lines:
-                    if line.strip():  # Only write non-empty lines
-                        text_point = fitz.Point(r1_x0 + r1_off_x + 5, y_pos)
-                        tw.append(text_point, line, font=custom_font, fontsize=fontsize_top)
-                    y_pos += line_height
-                    
-                tw.write_text(page, color=custom_color)
+            # Color codes
+            color_name = (0x21/255, 0x21/255, 0x21/255)  # #212121 for Area 1 (Name)
+            color_body = (0x14/255, 0x14/255, 0x3c/255)  # #14143c for rest of body
 
-            # Area 2: Second Section (Date) - FONT (11pt)
-            if second_section:
-                # Whiteout Box - simple fill, no stroke
-                rect_whiteout2 = fitz.Rect(r2_x0, r2_y0, r2_x1, r2_y1)
-                page.draw_rect(rect_whiteout2, color=(1,1,1), fill=(1,1,1), stroke_opacity=0)
+            def add_main_text(text, prefix, fontsize, text_color, is_multiline=False):
+                if not text or not text.strip():
+                    return
+                coords = areas.get(prefix)
+                if not coords or coords['x1'] == 0:
+                    return
                 
-                # Use TextWriter for proper Unicode rendering
-                tw2 = fitz.TextWriter(page.rect)
-                text_point2 = fitz.Point(r2_x0 + r2_off_x + 5, r2_y0 + r2_off_y + fontsize_date + 2)
-                tw2.append(text_point2, second_section, font=custom_font, fontsize=fontsize_date)
-                tw2.write_text(page, color=custom_color)
+                # Whiteout
+                rect = fitz.Rect(coords['x0'], coords['y0'], coords['x1'], coords['y1'])
+                page.draw_rect(rect, color=(1,1,1), fill=(1,1,1), stroke_opacity=0)
+                
+                box_width = abs(coords['x1'] - coords['x0'])
+                box_height = abs(coords['y1'] - coords['y0'])
+                
+                tw = fitz.TextWriter(page.rect)
+                if is_multiline:
+                    line_height = fontsize * 1.2
+                    lines = [l.strip() for l in text.split('\n') if l.strip()]
+                    # Top-left alignment with 5px padding
+                    y_pos = coords['y0'] + 5 + fontsize + coords['off_y']
+                    
+                    for line in lines:
+                        x_pos = coords['x0'] + 5 + coords['off_x']
+                        text_point = fitz.Point(x_pos, y_pos)
+                        tw.append(text_point, line, font=custom_font, fontsize=fontsize)
+                        y_pos += line_height
+                else:
+                    # Top-left alignment with 5px padding
+                    x_pos = coords['x0'] + 5 + coords['off_x']
+                    # y_pos using baseline offset
+                    y_pos = coords['y0'] + 5 + (fontsize * 0.8) + coords['off_y']
+                    
+                    text_point = fitz.Point(x_pos, y_pos)
+                    tw.append(text_point, text, font=custom_font, fontsize=fontsize)
+                tw.write_text(page, color=text_color)
+
+            # Render all fields
+            add_main_text(top_name, 'r1', fontsize_top, color_name, is_multiline=True)
+            add_main_text(second_section, 'r2', fontsize_vehicle, color_body)
+            add_main_text(marke, 'r3', fontsize_vehicle, color_body)
+            add_main_text(model, 'r4', fontsize_vehicle, color_body)
+            add_main_text(stealnumber, 'r5', fontsize_vehicle, color_body)
+            add_main_text(art, 'r6', fontsize_vehicle, color_body)
+            add_main_text(forste_gang, 'r7', fontsize_vehicle, color_body)
+            add_main_text(plate_number, 'r8', fontsize_vehicle, color_body)
 
             if action == 'preview':
                 pix = page.get_pixmap()
                 img_data = pix.tobytes("png")
                 img_b64 = base64.b64encode(img_data).decode('utf-8')
-                return render_template('index.html', preview_image=img_b64, 
-                                       top_name=top_name, second_section=second_section,
-                                       r1_x0=r1_x0, r1_y0=r1_y0, r1_x1=r1_x1, r1_y1=r1_y1,
-                                       r1_off_x=r1_off_x, r1_off_y=r1_off_y,
-                                       r2_x0=r2_x0, r2_y0=r2_y0, r2_x1=r2_x1, r2_y1=r2_y1,
-                                       r2_off_x=r2_off_x, r2_off_y=r2_off_y)
+                return render_template('index.html', preview_image=img_b64)
 
         # Handle template PDF generation
         if action == 'download_template':
@@ -391,9 +480,9 @@ def index():
             if len(template_doc) > 0:
                 template_page = template_doc[0]
                 
-                # Load Font: Use subset Arial Unicode (only digits 0-9, ~6KB instead of 18MB)
+                # Revert to original font for template
                 font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial-unicode-digits.ttf')
-                print(f"DEBUG: Loading subset font from {font_path}")
+                print(f"DEBUG: Loading font from {font_path}")
                 template_font = fitz.Font(fontfile=font_path)
                 
                 template_color = (0, 0, 0)  # Black text

@@ -7,6 +7,13 @@
     <title>PDF Editor Professional</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        /* Universal box-sizing for mobile compatibility */
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
         :root {
             --primary: #4f46e5;
             --glass-bg: rgba(255, 255, 255, 0.1);
@@ -15,7 +22,7 @@
         }
 
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Helvetica', 'Arial', sans-serif;
             background: linear-gradient(135deg, #1e1e2f 0%, #14143c 100%);
             color: #fff;
             min-height: 100vh;
@@ -50,6 +57,8 @@
             max-width: 500px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
             animation: fadeIn 0.8s ease-out;
+            box-sizing: border-box;
+            overflow: hidden;
         }
 
         h1 {
@@ -197,6 +206,187 @@
         .tab-content.active {
             display: block;
         }
+
+        /* Dropdown Styling */
+        select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 10px;
+            color: white;
+            font-family: inherit;
+            font-size: 1rem;
+            box-sizing: border-box;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a5b4fc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 1rem center;
+            background-size: 1.25rem;
+        }
+
+        select:focus {
+            outline: none;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: #818cf8;
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2);
+        }
+
+        option {
+            background-color: #1e1e2f;
+            color: white;
+        }
+
+        /* Responsive Mobile Styles */
+        @media (max-width: 600px) {
+
+            /* Hide the ambient glow on mobile as it causes overflow */
+            .ambient {
+                display: none !important;
+            }
+
+            html,
+            body {
+                width: 100% !important;
+                max-width: 100% !important;
+                overflow-x: hidden !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                position: relative;
+            }
+
+            .container {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                border-radius: 0 !important;
+                /* Full width looks better */
+                border: none !important;
+                padding: 1rem !important;
+                box-shadow: none !important;
+                overflow-x: hidden !important;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-top: 1rem;
+                /* Add space since we removed body padding */
+                margin-bottom: 1rem;
+            }
+
+            .tab-nav {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .tab-btn {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+
+            .form-group {
+                margin-bottom: 1rem;
+            }
+
+            input[type="text"],
+            textarea,
+            input[type="file"],
+            input[type="number"] {
+                padding: 10px 12px;
+                font-size: 0.9rem;
+            }
+
+            /* Prevent horizontal scroll */
+            html,
+            body {
+                overflow-x: hidden !important;
+                max-width: 100vw !important;
+            }
+
+            /* Stack ALL grids on mobile */
+            /* Stack ALL grids and flex containers on mobile */
+            div[style*="grid"],
+            div[style*="display: flex"] {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+                align-items: stretch !important;
+                /* Make children full width */
+            }
+
+            /* Make all inputs respect container width */
+            input,
+            textarea,
+            select,
+            button {
+                max-width: 100% !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Buttons */
+            button {
+                padding: 12px !important;
+                font-size: 0.9rem !important;
+                width: 100% !important;
+            }
+
+            /* HIDE preview and calibration on mobile - they cause overflow */
+            canvas,
+            #main-preview-container,
+            #mainPreviewCanvas,
+            details,
+            [style*="Live Preview"],
+            div[style*="preview"] {
+                display: none !important;
+            }
+
+            /* Hide font size controls on mobile */
+            div[style*="Font Sizes"] {
+                display: none !important;
+            }
+
+            /* Hide the preview section container */
+            h5:has(+ canvas),
+            .form-group:has(canvas) {
+                display: none !important;
+            }
+
+            /* File number in corner */
+            .container>div:first-child {
+                position: static !important;
+                margin-bottom: 0.5rem;
+            }
+
+            /* Tab buttons side by side */
+            .tab-nav {
+                display: flex !important;
+                flex-direction: row !important;
+                gap: 0.5rem !important;
+            }
+
+            .tab-btn {
+                flex: 1 !important;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 400px) {
+            .container {
+                padding: 0.75rem;
+            }
+
+            h1 {
+                font-size: 1.3rem;
+            }
+
+            input,
+            textarea,
+            button {
+                font-size: 0.85rem !important;
+            }
+        }
     </style>
 </head>
 
@@ -222,8 +412,13 @@
         <div id="main-pdf" class="tab-content active">
             <form id="main-form" action="/" method="post" enctype="multipart/form-data">
                 <div class="form-group">
-                    <label for="pdf_file">Upload Document</label>
-                    <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" required>
+                    <label for="pdf_file">Upload Document (Optional if using Template)</label>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <input type="file" name="pdf_file" id="pdf_file" accept=".pdf" style="flex: 1;">
+                        <button type="button" id="load-main-template-btn" class="save-btn"
+                            style="padding: 10px 16px; font-size: 0.9rem; width: auto; margin-top: 0; white-space: nowrap;">🔄
+                            Load Template</button>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -231,20 +426,7 @@
                     <textarea name="top_name" id="top_name" placeholder="Enter main content here..."></textarea>
                 </div>
 
-                <!-- Toggle for Date/Template fields -->
-                <div class="form-group" style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0;">
-                    <label class="toggle-switch"
-                        style="position: relative; display: inline-block; width: 50px; height: 26px; margin: 0;">
-                        <input type="checkbox" id="enable_date_fields" checked style="opacity: 0; width: 0; height: 0;">
-                        <span
-                            style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4b5563; border-radius: 26px; transition: 0.3s;"></span>
-                        <span id="toggle-slider"
-                            style="position: absolute; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; border-radius: 50%; transition: 0.3s;"></span>
-                    </label>
-                    <span style="font-size: 0.9rem; font-weight: 500;">Include Date & Template</span>
-                    <span style="font-size: 0.75rem; color: #a5b4fc;">(Off = only change name)</span>
-                </div>
-
+                <!-- Date Fields Section -->
                 <div id="date-fields-container">
                     <div class="form-group">
                         <label for="second_section">Valid Date Range</label>
@@ -252,53 +434,342 @@
                             placeholder="e.g. 15-12-2025 til 19-12-2025">
                     </div>
 
-                    <!-- Template Size Selection -->
-                    <div class="form-group">
-                        <label>Template Size</label>
-                        <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
-                            <label style="display: inline-flex; align-items: center; cursor: pointer;">
-                                <input type="radio" name="main_template_type" value="big" checked> Big
-                            </label>
-                            <label style="display: inline-flex; align-items: center; cursor: pointer;">
-                                <input type="radio" name="main_template_type" value="small"> Small
-                            </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="tpl_left_date" style="font-size: 0.9rem;">Left Date</label>
+                            <input type="text" name="tpl_left_date" id="tpl_left_date" placeholder="e.g. 181225">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="tpl_right_date" style="font-size: 0.9rem;">Right Date</label>
+                            <input type="text" name="tpl_right_date" id="tpl_right_date" placeholder="e.g. 241225">
                         </div>
                     </div>
+                </div>
 
-                    <!-- Plate Number and Dates for Template PDF -->
-                    <div class="form-group" style="padding-top: 1rem; border-top: 1px solid var(--glass-border);">
-                        <label style="color: #10b981; margin-bottom: 0.5rem; display: block;">📋 Template PDF Data
-                            (Optional)</label>
-                        <p style="font-size: 0.75rem; color: #a5b4fc; margin: 0 0 0.75rem;">Fill these to also download
-                            a
-                            template PDF with the main PDF.</p>
-
-                        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
-                            <div>
-                                <label for="plate_number" style="font-size: 0.8rem; color: #c7d2fe;">Plate
-                                    Number</label>
-                                <input type="text" name="plate_number" id="plate_number" placeholder="e.g. 1881592">
-                            </div>
-                            <div>
-                                <label for="tpl_left_date" style="font-size: 0.8rem; color: #c7d2fe;">Left Date</label>
-                                <input type="text" name="tpl_left_date" id="tpl_left_date" placeholder="e.g. 181225">
-                            </div>
-                            <div>
-                                <label for="tpl_right_date" style="font-size: 0.8rem; color: #c7d2fe;">Right
-                                    Date</label>
-                                <input type="text" name="tpl_right_date" id="tpl_right_date" placeholder="e.g. 241225">
-                            </div>
-                        </div>
-                        <p style="font-size: 0.7rem; color: #818cf8; margin: 0.5rem 0 0;">
-                            Big: Plate# → Up/Down Number | Left Date → UL/DL Date | Right Date → UR/DR Date<br>
-                            Small: Plate# → Up Number | Left Date → UL Date | Right Date → UR Date
-                        </p>
+                <!-- PRIMARY INPUTS: Stelnr and Plate Number -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin: 0;">
+                        <label for="stealnumber">Stelnr. (VIN - Auto-fills below)</label>
+                        <input type="text" name="stealnumber" id="stealnumber" placeholder="e.g. YS2S4X20005639312">
                     </div>
-                </div><!-- End date-fields-container -->
+                    <div class="form-group" style="margin: 0;">
+                        <label for="plate_number">Plate Number</label>
+                        <input type="text" name="plate_number" id="plate_number" placeholder="e.g. 1881592">
+                    </div>
+                </div>
 
+                <!-- Auto-filled fields (from VIN) - subtle section -->
+                <div
+                    style="padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 8px; margin-bottom: 1rem; border: 1px dashed rgba(255,255,255,0.1);">
+                    <p style="font-size: 0.75rem; color: #a5b4fc; margin: 0 0 0.5rem;">🔄 Auto-filled from VIN (editable
+                        if needed):</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem;">
+                        <div class="form-group" style="margin: 0;">
+                            <label for="marke" style="font-size: 0.8rem;">Mærke</label>
+                            <input type="text" name="marke" id="marke" list="marke-list" placeholder="Auto-filled">
+                            <datalist id="marke-list">
+                                <option value="Mercedes-benz">
+                                <option value="MAN">
+                                <option value="DAF">
+                                <option value="Scania">
+                                <option value="Renault">
+                                <option value="Volvo">
+                            </datalist>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="model" style="font-size: 0.8rem;">Model</label>
+                            <input type="text" name="model" id="model" list="model-list" placeholder="Auto-filled">
+                            <datalist id="model-list">
+                                <option value="Sættevogn">
+                                <option value="Krone">
+                                <option value="Schmitz">
+                            </datalist>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label for="art" style="font-size: 0.8rem;">Art</label>
+                            <input type="text" name="art" id="art" list="art-list" placeholder="Auto-filled">
+                            <datalist id="art-list">
+                                <option value="Lastbil">
+                                <option value="Varebil">
+                                <option value="Personbil">
+                                <option value="Store Personbil">
+                                <option value="Sættevogn">
+                            </datalist>
+                        </div>
+                    </div>
+                </div>
+
+                <script>
+                    // VIN Decoder - Auto-fill Mærke based on VIN prefix (WMI codes)
+                    (function () {
+                        const vinManufacturers = {
+                            // === SCANIA (Sweden) ===
+                            'YS2': { marke: 'Scania', art: 'Lastbil' },
+                            'YS9': { marke: 'Scania', art: 'Lastbil' },
+                            'XLE': { marke: 'Scania', art: 'Lastbil' },
+                            'YS3': { marke: 'Scania', art: 'Lastbil' },
+
+                            // === VOLVO (Sweden) ===
+                            'YV1': { marke: 'Volvo', art: 'Personbil' },
+                            'YV2': { marke: 'Volvo', art: 'Lastbil' },
+                            'YV3': { marke: 'Volvo', art: 'Lastbil' },
+                            'YV4': { marke: 'Volvo', art: 'Personbil' },
+                            'YV5': { marke: 'Volvo', art: '-' },
+
+                            // === MAN (Germany) ===
+                            'WMA': { marke: 'MAN', art: 'Lastbil' },
+                            'WMH': { marke: 'MAN', art: 'Lastbil' },
+                            'WM1': { marke: 'MAN', art: 'Lastbil' },
+                            'WM2': { marke: 'MAN', art: 'Lastbil' },
+
+                            // === DAF (Netherlands) ===
+                            'XLR': { marke: 'DAF', art: 'Lastbil' },
+                            'XLB': { marke: 'DAF', art: 'Lastbil' },
+                            'XL9': { marke: 'DAF', art: 'Lastbil' },
+
+                            // === MERCEDES-BENZ (Germany) ===
+                            'WDB': { marke: 'Mercedes-benz', art: 'Lastbil' },
+                            'WDC': { marke: 'Mercedes-benz', art: 'Personbil' },
+                            'WDD': { marke: 'Mercedes-benz', art: 'Personbil' },
+                            'WDF': { marke: 'Mercedes-benz', art: 'Varebil' },
+                            'WDZ': { marke: 'Mercedes-benz', art: '-' },
+                            'WMX': { marke: 'Mercedes-benz', art: 'Varebil' },
+                            '4JG': { marke: 'Mercedes-benz', art: 'Personbil' },
+
+                            // === RENAULT (France) ===
+                            'VNE': { marke: 'Renault', art: 'Lastbil' },
+                            'VF1': { marke: 'Renault', art: 'Personbil' },
+                            'VF2': { marke: 'Renault', art: 'Personbil' },
+                            'VF3': { marke: 'Renault', art: 'Personbil' },
+                            'VF6': { marke: 'Renault', art: 'Lastbil' },
+                            'VF7': { marke: 'Renault', art: 'Personbil' },
+
+                            // === IVECO (Italy) ===
+                            'ZCF': { marke: 'IVECO', art: 'Lastbil' },
+                            'ZFA': { marke: 'IVECO', art: 'Lastbil' },
+                            'ZFF': { marke: 'IVECO', art: 'Lastbil' },
+
+                            // === KRONE (Germany - Trailers) ===
+                            'WKE': { marke: 'Krone', art: 'Sættevogn', model: 'Sættevogn' },
+                            'WKN': { marke: 'Krone', art: 'Sættevogn', model: 'Sættevogn' },
+                            'WK0': { marke: 'Krone', art: 'Sættevogn', model: 'Sættevogn' },
+
+                            // === SCHMITZ CARGOBULL (Germany - Trailers) ===
+                            'WSM': { marke: 'Schmitz', art: 'Sættevogn', model: 'Sættevogn' },
+                            'WS0': { marke: 'Schmitz', art: 'Sættevogn', model: 'Sættevogn' },
+                            'WS1': { marke: 'Schmitz', art: 'Sættevogn', model: 'Sættevogn' },
+
+                            // === KOGEL (Germany - Trailers) ===
+                            'WK0': { marke: 'Kögel', art: 'Sættevogn', model: 'Sættevogn' },
+                            'WKO': { marke: 'Kögel', art: 'Sættevogn', model: 'Sættevogn' },
+
+                            // === WIELTON (Poland - Trailers) ===
+                            'SWS': { marke: 'Wielton', art: 'Sættevogn', model: 'Sættevogn' },
+                            'SW0': { marke: 'Wielton', art: 'Sættevogn', model: 'Sættevogn' },
+
+                            // === FORD ===
+                            'WFO': { marke: 'Ford', art: 'Varebil' },
+                            'WF0': { marke: 'Ford', art: 'Varebil' },
+                            '1FA': { marke: 'Ford', art: 'Personbil' },
+                            '1FB': { marke: 'Ford', art: 'Varebil' },
+                            '1FC': { marke: 'Ford', art: 'Varebil' },
+                            '1FD': { marke: 'Ford', art: 'Lastbil' },
+                            '1FM': { marke: 'Ford', art: 'Personbil' },
+
+                            // === VOLKSWAGEN ===
+                            'WVW': { marke: 'Volkswagen', art: 'Personbil' },
+                            'WV1': { marke: 'Volkswagen', art: 'Varebil' },
+                            'WV2': { marke: 'Volkswagen', art: 'Varebil' },
+                            'WV3': { marke: 'Volkswagen', art: 'Varebil' },
+                            '3VW': { marke: 'Volkswagen', art: 'Personbil' },
+
+                            // === AUDI ===
+                            'WAU': { marke: 'Audi', art: 'Personbil' },
+                            'WUA': { marke: 'Audi', art: 'Personbil' },
+
+                            // === BMW ===
+                            'WBA': { marke: 'BMW', art: 'Personbil' },
+                            'WBS': { marke: 'BMW', art: 'Personbil' },
+                            'WBY': { marke: 'BMW', art: 'Personbil' },
+
+                            // === PORSCHE ===
+                            'WP0': { marke: 'Porsche', art: 'Personbil' },
+                            'WP1': { marke: 'Porsche', art: 'Personbil' },
+
+                            // === PEUGEOT ===
+                            'VF3': { marke: 'Peugeot', art: 'Personbil' },
+
+                            // === CITROEN ===
+                            'VF7': { marke: 'Citroen', art: 'Personbil' },
+
+                            // === FIAT ===
+                            'ZFA': { marke: 'Fiat', art: 'Personbil' },
+                            'ZFC': { marke: 'Fiat', art: 'Varebil' },
+                            'ZLA': { marke: 'Fiat', art: 'Personbil' },
+
+                            // === OPEL/VAUXHALL ===
+                            'W0L': { marke: 'Opel', art: 'Personbil' },
+                            'W0V': { marke: 'Opel', art: 'Personbil' },
+
+                            // === TOYOTA ===
+                            'JTD': { marke: 'Toyota', art: 'Personbil' },
+                            'JTE': { marke: 'Toyota', art: 'Personbil' },
+                            'JTH': { marke: 'Toyota', art: 'Personbil' },
+                            'JTK': { marke: 'Toyota', art: 'Personbil' },
+                            'JTM': { marke: 'Toyota', art: 'Personbil' },
+                            'JTN': { marke: 'Toyota', art: 'Personbil' },
+                            'SB1': { marke: 'Toyota', art: 'Personbil' },
+
+                            // === NISSAN ===
+                            'JN1': { marke: 'Nissan', art: 'Personbil' },
+                            'JN6': { marke: 'Nissan', art: 'Personbil' },
+                            'VSK': { marke: 'Nissan', art: 'Personbil' },
+
+                            // === HONDA ===
+                            'JHM': { marke: 'Honda', art: 'Personbil' },
+                            'SHH': { marke: 'Honda', art: 'Personbil' },
+
+                            // === MAZDA ===
+                            'JM1': { marke: 'Mazda', art: 'Personbil' },
+                            'JM3': { marke: 'Mazda', art: 'Personbil' },
+
+                            // === HYUNDAI ===
+                            'KMH': { marke: 'Hyundai', art: 'Personbil' },
+                            'TMA': { marke: 'Hyundai', art: 'Personbil' },
+
+                            // === KIA ===
+                            'KNA': { marke: 'Kia', art: 'Personbil' },
+                            'KNE': { marke: 'Kia', art: 'Personbil' },
+                            'U5Y': { marke: 'Kia', art: 'Personbil' },
+
+                            // === SKODA ===
+                            'TMB': { marke: 'Skoda', art: 'Personbil' },
+
+                            // === SEAT ===
+                            'VSS': { marke: 'Seat', art: 'Personbil' },
+
+                            // === MITSUBISHI ===
+                            'JMB': { marke: 'Mitsubishi', art: 'Personbil' },
+                            'JMY': { marke: 'Mitsubishi', art: 'Personbil' },
+
+                            // === SUBARU ===
+                            'JF1': { marke: 'Subaru', art: 'Personbil' },
+                            'JF2': { marke: 'Subaru', art: 'Personbil' },
+
+                            // === SUZUKI ===
+                            'JS1': { marke: 'Suzuki', art: 'Personbil' },
+                            'JSA': { marke: 'Suzuki', art: 'Personbil' },
+
+                            // === LAND ROVER ===
+                            'SAL': { marke: 'Land Rover', art: 'Personbil' },
+
+                            // === JAGUAR ===
+                            'SAJ': { marke: 'Jaguar', art: 'Personbil' },
+
+                            // === MINI ===
+                            'WMW': { marke: 'Mini', art: 'Personbil' },
+
+                            // === TESLA ===
+                            '5YJ': { marke: 'Tesla', art: 'Personbil' },
+
+                            // === BUS MANUFACTURERS ===
+                            'NEB': { marke: 'Neoplan', art: 'Bus' },
+                            'WEB': { marke: 'Evobus', art: 'Bus' },
+                            'SEV': { marke: 'Setra', art: 'Bus' },
+
+                            // === TRAILER MANUFACTURERS ===
+                            'YHC': { marke: 'Humbaur', art: 'Sættevogn', model: 'Sættevogn' },
+                            'TTN': { marke: 'Tirsan', art: 'Sættevogn', model: 'Sættevogn' },
+                            'VEX': { marke: 'VAK', art: 'Sættevogn', model: 'Sættevogn' },
+                            'YNL': { marke: 'Norfrig', art: 'Sættevogn', model: 'Sættevogn' },
+                            'VAN': { marke: 'Van Eck', art: 'Sættevogn', model: 'Sættevogn' },
+                            'LZZ': { marke: 'CIMC', art: 'Sættevogn', model: 'Sættevogn' },
+
+                            // === CHINESE TRUCKS ===
+                            'LFP': { marke: 'FAW', art: 'Lastbil' },
+                            'LGU': { marke: 'Shaanxi', art: 'Lastbil' },
+                            'LZG': { marke: 'Sinotruk', art: 'Lastbil' },
+
+                            // === EASTERN EUROPEAN ===
+                            'TMK': { marke: 'Tatra', art: 'Lastbil' },
+                            'TNE': { marke: 'Avia', art: 'Lastbil' },
+                            'SU9': { marke: 'Kamaz', art: 'Lastbil' },
+                            'XTC': { marke: 'Kamaz', art: 'Lastbil' },
+                            'Y6D': { marke: 'UAZ', art: 'Varebil' },
+                        };
+
+                        const stealnumberInput = document.getElementById('stealnumber');
+                        const markeInput = document.getElementById('marke');
+                        const artInput = document.getElementById('art');
+                        const modelInput = document.getElementById('model');
+
+                        if (stealnumberInput) {
+                            stealnumberInput.addEventListener('input', function () {
+                                const vin = this.value.toUpperCase().trim();
+                                if (vin.length >= 3) {
+                                    const prefix = vin.substring(0, 3);
+                                    const match = vinManufacturers[prefix];
+                                    if (match) {
+                                        // Always update when VIN changes (dynamic)
+                                        if (markeInput) {
+                                            markeInput.value = match.marke;
+                                        }
+                                        if (artInput && match.art) {
+                                            artInput.value = match.art;
+                                        }
+                                        if (modelInput) {
+                                            // Set model if available, otherwise set to '-'
+                                            modelInput.value = match.model || '-';
+                                        }
+                                    } else {
+                                        // Unknown VIN prefix - set "-"
+                                        if (markeInput) {
+                                            markeInput.value = '-';
+                                        }
+                                        if (modelInput) {
+                                            modelInput.value = '-';
+                                        }
+                                        if (artInput) {
+                                            artInput.value = '-';
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                    })();
+                </script>
+
+                <!-- Download Button -->
                 <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
                     <button type="button" id="download-btn">Download PDF</button>
                 </div>
+
+                <!-- Template Size Selection (after download) -->
+                <div class="form-group"
+                    style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                    <label>Template Size</label>
+                    <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="main_template_type" value="big" checked> Big
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer;">
+                            <input type="radio" name="main_template_type" value="small"> Small
+                        </label>
+                    </div>
+                    <p style="font-size: 0.7rem; color: #818cf8; margin: 0.5rem 0 0;">
+                        Big: Plate# → Up/Down Number | Left Date → UL/DL Date | Right Date → UR/DR Date<br>
+                        Small: Plate# → Up Number | Left Date → UL Date | Right Date → UR Date
+                    </p>
+                </div>
+
+                <!-- Første gang (at the end as requested) -->
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="forste_gang">Første gang (Date of First Registration)</label>
+                    <input type="text" name="forste_gang" id="forste_gang" placeholder="e.g. 01-01-2020">
+                </div>
+
+                <!-- Toggle for Include Date & Template (hidden but kept for functionality) -->
+                <input type="hidden" id="enable_date_fields" value="1">
 
                 <!-- Font Size Controls for Main PDF -->
                 <div class="form-group"
@@ -328,15 +799,33 @@
                         Select area → Draw rectangle on canvas to set coordinates.</p>
 
                     <!-- Calibration Mode Selection -->
-                    <div style="margin-bottom: 0.5rem; display: flex; gap: 1rem;">
+                    <div
+                        style="margin-bottom: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; background: rgba(0,0,0,0.3); padding: 0.75rem; border-radius: 8px;">
                         <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
                             <input type="radio" name="main_calib_mode" value="1" checked style="margin-right: 4px;">
-                            Top
-                            Name Area
+                            Name
                         </label>
                         <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
                             <input type="radio" name="main_calib_mode" value="2" style="margin-right: 4px;"> Date
-                            Area
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
+                            <input type="radio" name="main_calib_mode" value="3" style="margin-right: 4px;"> Mærke
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
+                            <input type="radio" name="main_calib_mode" value="4" style="margin-right: 4px;"> Model
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
+                            <input type="radio" name="main_calib_mode" value="5" style="margin-right: 4px;"> Stelnr.
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
+                            <input type="radio" name="main_calib_mode" value="6" style="margin-right: 4px;"> Art
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
+                            <input type="radio" name="main_calib_mode" value="7" style="margin-right: 4px;"> Første
+                            Gang
+                        </label>
+                        <label style="display: inline-flex; align-items: center; cursor: pointer; font-size: 0.85rem;">
+                            <input type="radio" name="main_calib_mode" value="8" style="margin-right: 4px;"> Plate #
                         </label>
                     </div>
 
@@ -359,32 +848,128 @@
 
                     <h4 style="margin: 0.5rem 0; color: #fff;">Area 1: Top Name (Whiteout & Text Box)</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
-                        <label>X0 <input type="number" name="r1_x0" id="r1_x0" value="{{ r1_x0|default(13) }}"></label>
-                        <label>Y0 <input type="number" name="r1_y0" id="r1_y0" value="{{ r1_y0|default(72) }}"></label>
-                        <label>X1 <input type="number" name="r1_x1" id="r1_x1" value="{{ r1_x1|default(552) }}"></label>
-                        <label>Y1 <input type="number" name="r1_y1" id="r1_y1" value="{{ r1_y1|default(160) }}"></label>
+                        <label>X0 <input type="number" name="r1_x0" id="r1_x0" value="{{ r1_x0|default(28) }}"></label>
+                        <label>Y0 <input type="number" name="r1_y0" id="r1_y0" value="{{ r1_y0|default(40) }}"></label>
+                        <label>X1 <input type="number" name="r1_x1" id="r1_x1" value="{{ r1_x1|default(150) }}"></label>
+                        <label>Y1 <input type="number" name="r1_y1" id="r1_y1" value="{{ r1_y1|default(127) }}"></label>
                     </div>
                     <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
                         <span style="font-size: 0.8rem;">Text Offset:</span>
-                        <input type="number" name="r1_off_x" id="r1_off_x" value="{{ r1_off_x|default(35) }}"
+                        <input type="number" name="r1_off_x" id="r1_off_x" value="{{ r1_off_x|default(10) }}"
                             placeholder="+X" style="width: 80px;">
-                        <input type="number" name="r1_off_y" id="r1_off_y" value="{{ r1_off_y|default(8) }}"
+                        <input type="number" name="r1_off_y" id="r1_off_y" value="{{ r1_off_y|default(1) }}"
                             placeholder="+Y" style="width: 80px;">
                     </div>
 
                     <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 2: Date (Whiteout & Text Box)</h4>
                     <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
-                        <label>X0 <input type="number" name="r2_x0" id="r2_x0" value="{{ r2_x0|default(143) }}"></label>
-                        <label>Y0 <input type="number" name="r2_y0" id="r2_y0" value="{{ r2_y0|default(502) }}"></label>
-                        <label>X1 <input type="number" name="r2_x1" id="r2_x1" value="{{ r2_x1|default(313) }}"></label>
-                        <label>Y1 <input type="number" name="r2_y1" id="r2_y1" value="{{ r2_y1|default(522) }}"></label>
+                        <label>X0 <input type="number" name="r2_x0" id="r2_x0" value="{{ r2_x0|default(124) }}"></label>
+                        <label>Y0 <input type="number" name="r2_y0" id="r2_y0" value="{{ r2_y0|default(463) }}"></label>
+                        <label>X1 <input type="number" name="r2_x1" id="r2_x1" value="{{ r2_x1|default(257) }}"></label>
+                        <label>Y1 <input type="number" name="r2_y1" id="r2_y1" value="{{ r2_y1|default(478) }}"></label>
                     </div>
                     <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
                         <span style="font-size: 0.8rem;">Text Offset:</span>
-                        <input type="number" name="r2_off_x" id="r2_off_x" value="{{ r2_off_x|default(-4) }}"
+                        <input type="number" name="r2_off_x" id="r2_off_x" value="{{ r2_off_x|default(6) }}"
                             placeholder="+X" style="width: 80px;">
-                        <input type="number" name="r2_off_y" id="r2_off_y" value="{{ r2_off_y|default(1) }}"
+                        <input type="number" name="r2_off_y" id="r2_off_y" value="{{ r2_off_y|default(2) }}"
                             placeholder="+Y" style="width: 80px;">
+                    </div>
+
+                    <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 3: Mærke (Marke)</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                        <label>X0 <input type="number" name="r3_x0" id="r3_x0" value="{{ r3_x0|default(80) }}"></label>
+                        <label>Y0 <input type="number" name="r3_y0" id="r3_y0" value="{{ r3_y0|default(351) }}"></label>
+                        <label>X1 <input type="number" name="r3_x1" id="r3_x1" value="{{ r3_x1|default(212) }}"></label>
+                        <label>Y1 <input type="number" name="r3_y1" id="r3_y1" value="{{ r3_y1|default(366) }}"></label>
+                    </div>
+                    <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 0.8rem;">Text Offset:</span>
+                        <input type="number" name="r3_off_x" id="r3_off_x" value="{{ r3_off_x|default(-3) }}"
+                            placeholder="+X" style="width: 80px;">
+                        <input type="number" name="r3_off_y" id="r3_off_y" value="{{ r3_off_y|default(0) }}"
+                            placeholder="+Y" style="width: 80px;">
+                    </div>
+
+                    <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 4: Model</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                        <label>X0 <input type="number" name="r4_x0" id="r4_x0" value="{{ r4_x0|default(51) }}"></label>
+                        <label>Y0 <input type="number" name="r4_y0" id="r4_y0" value="{{ r4_y0|default(401) }}"></label>
+                        <label>X1 <input type="number" name="r4_x1" id="r4_x1" value="{{ r4_x1|default(170) }}"></label>
+                        <label>Y1 <input type="number" name="r4_y1" id="r4_y1" value="{{ r4_y1|default(413) }}"></label>
+                    </div>
+                    <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 0.8rem;">Text Offset:</span>
+                        <input type="number" name="r4_off_x" id="r4_off_x" value="{{ r4_off_x|default(-4) }}"
+                            placeholder="+X" style="width: 80px;">
+                        <input type="number" name="r4_off_y" id="r4_off_y" value="{{ r4_off_y|default(0) }}"
+                            placeholder="+Y" style="width: 80px;">
+                    </div>
+
+                    <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 5: Stelnr. (Stealnumber)</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                        <label>X0 <input type="number" name="r5_x0" id="r5_x0" value="{{ r5_x0|default(97) }}"></label>
+                        <label>Y0 <input type="number" name="r5_y0" id="r5_y0" value="{{ r5_y0|default(417) }}"></label>
+                        <label>X1 <input type="number" name="r5_x1" id="r5_x1" value="{{ r5_x1|default(244) }}"></label>
+                        <label>Y1 <input type="number" name="r5_y1" id="r5_y1" value="{{ r5_y1|default(431) }}"></label>
+                    </div>
+                    <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 0.8rem;">Text Offset:</span>
+                        <input type="number" name="r5_off_x" id="r5_off_x" value="{{ r5_off_x|default(-3) }}"
+                            placeholder="+X" style="width: 80px;">
+                        <input type="number" name="r5_off_y" id="r5_off_y" value="{{ r5_off_y|default(-4) }}"
+                            placeholder="+Y" style="width: 80px;">
+                    </div>
+
+                    <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 6: Art (Vehicle Type)</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                        <label>X0 <input type="number" name="r6_x0" id="r6_x0" value="{{ r6_x0|default(46) }}"></label>
+                        <label>Y0 <input type="number" name="r6_y0" id="r6_y0" value="{{ r6_y0|default(454) }}"></label>
+                        <label>X1 <input type="number" name="r6_x1" id="r6_x1" value="{{ r6_x1|default(141) }}"></label>
+                        <label>Y1 <input type="number" name="r6_y1" id="r6_y1" value="{{ r6_y1|default(467) }}"></label>
+                    </div>
+                    <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 0.8rem;">Text Offset:</span>
+                        <input type="number" name="r6_off_x" id="r6_off_x" value="{{ r6_off_x|default(-4) }}"
+                            placeholder="+X" style="width: 80px;">
+                        <input type="number" name="r6_off_y" id="r6_off_y" value="{{ r6_off_y|default(-4.7) }}"
+                            placeholder="+Y" style="width: 80px;">
+                    </div>
+
+                    <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 7: Første gang</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                        <label>X0 <input type="number" name="r7_x0" id="r7_x0" value="{{ r7_x0|default(116) }}"></label>
+                        <label>Y0 <input type="number" name="r7_y0" id="r7_y0" value="{{ r7_y0|default(463) }}"></label>
+                        <label>X1 <input type="number" name="r7_x1" id="r7_x1" value="{{ r7_x1|default(205) }}"></label>
+                        <label>Y1 <input type="number" name="r7_y1" id="r7_y1" value="{{ r7_y1|default(497) }}"></label>
+                    </div>
+                    <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 0.8rem;">Text Offset:</span>
+                        <input type="number" name="r7_off_x" id="r7_off_x" value="{{ r7_off_x|default(-3) }}"
+                            placeholder="+X" style="width: 80px;">
+                        <input type="number" name="r7_off_y" id="r7_off_y" value="{{ r7_off_y|default(-4) }}"
+                            placeholder="+Y" style="width: 80px;">
+                    </div>
+
+                    <h4 style="margin: 1rem 0 0.5rem; color: #fff;">Area 8: Plate Number</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 5px;">
+                        <label>X0 <input type="number" name="r8_x0" id="r8_x0" value="{{ r8_x0|default(132) }}"></label>
+                        <label>Y0 <input type="number" name="r8_y0" id="r8_y0" value="{{ r8_y0|default(301) }}"></label>
+                        <label>X1 <input type="number" name="r8_x1" id="r8_x1" value="{{ r8_x1|default(222) }}"></label>
+                        <label>Y1 <input type="number" name="r8_y1" id="r8_y1" value="{{ r8_y1|default(354) }}"></label>
+                    </div>
+                    <div style="margin-top: 0.5rem; display: flex; gap: 10px; align-items: center;">
+                        <span style="font-size: 0.8rem;">Text Offset:</span>
+                        <input type="number" name="r8_off_x" id="r8_off_x" value="{{ r8_off_x|default(-3) }}"
+                            placeholder="+X" style="width: 80px;">
+                        <input type="number" name="r8_off_y" id="r8_off_y" value="{{ r8_off_y|default(-4.2) }}"
+                            placeholder="+Y" style="width: 80px;">
+                    </div>
+
+                    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
+                        <label style="font-size: 0.8rem;">Vehicle Info Font Size</label>
+                        <input type="number" name="main_vehicle_fontsize" id="main_vehicle_fontsize" value="11"
+                            step="0.5" style="width: 80px;">
                     </div>
                 </details>
             </form>
@@ -661,7 +1246,17 @@
         const container = document.getElementById('calibration-container');
         const saveBtn = document.getElementById('save-settings-btn');
 
-        const inputs = ['r1_x0', 'r1_y0', 'r1_x1', 'r1_y1', 'r1_off_x', 'r1_off_y', 'r2_x0', 'r2_y0', 'r2_x1', 'r2_y1', 'r2_off_x', 'r2_off_y', 'main_top_fontsize', 'main_date_fontsize'];
+        const inputs = [
+            'r1_x0', 'r1_y0', 'r1_x1', 'r1_y1', 'r1_off_x', 'r1_off_y',
+            'r2_x0', 'r2_y0', 'r2_x1', 'r2_y1', 'r2_off_x', 'r2_off_y',
+            'r3_x0', 'r3_y0', 'r3_x1', 'r3_y1', 'r3_off_x', 'r3_off_y',
+            'r4_x0', 'r4_y0', 'r4_x1', 'r4_y1', 'r4_off_x', 'r4_off_y',
+            'r5_x0', 'r5_y0', 'r5_x1', 'r5_y1', 'r5_off_x', 'r5_off_y',
+            'r6_x0', 'r6_y0', 'r6_x1', 'r6_y1', 'r6_off_x', 'r6_off_y',
+            'r7_x0', 'r7_y0', 'r7_x1', 'r7_y1', 'r7_off_x', 'r7_off_y',
+            'r8_x0', 'r8_y0', 'r8_x1', 'r8_y1', 'r8_off_x', 'r8_off_y',
+            'main_top_fontsize', 'main_date_fontsize', 'main_vehicle_fontsize'
+        ];
         const fileNumberInput = document.getElementById('file_number');
         const downloadBtn = document.getElementById('download-btn');
         const form = document.querySelector('form');
@@ -998,11 +1593,12 @@
                     a.remove();
 
                     // Auto-increment the file number
-                    const numericPart = parseInt(currentNum, 10);
-                    if (!isNaN(numericPart)) {
-                        const nextNum = numericPart + 1;
-                        // Preserve leading zeros if original had them
-                        const paddedNum = String(nextNum).padStart(currentNum.length, '0');
+                    const mainNumericPart = parseInt(currentNum, 10);
+                    if (!isNaN(mainNumericPart)) {
+                        const nextNum = mainNumericPart + 1;
+                        // Always use at least 3 digits, or more if original was longer
+                        const padLength = Math.max(3, currentNum.length);
+                        const paddedNum = String(nextNum).padStart(padLength, '0');
                         fileNumberInput.value = paddedNum;
                         localStorage.setItem('pdf_editor_file_number', paddedNum);
                     }
@@ -1040,7 +1636,8 @@
                         };
                         const defaults = mainDefaults[templateType];
 
-                        // Get coordinates and fonts - use localStorage if saved, otherwise use defaults
+                        // Get coordinates and fonts - ONLY use localStorage then defaults
+                        // Do NOT use UI values as they may be from a different template type
                         const getCoord = (id) => {
                             const saved = localStorage.getItem(prefix + id);
                             return saved !== null ? saved : (defaults[id] !== undefined ? defaults[id] : 0);
@@ -1089,17 +1686,29 @@
                         }
                     }
 
-                    // Reset name and plate number fields after download
-                    const topNameInput = document.getElementById('top_name');
-                    const plateNumberInput = document.getElementById('plate_number');
-                    if (topNameInput) topNameInput.value = '';
-                    if (plateNumberInput) plateNumberInput.value = '';
+                    // Reset vehicle fields after successful download (keep dates)
+                    const fieldsToReset = [
+                        'top_name',     // Top Name
+                        'marke',        // Mærke
+                        'model',        // Model
+                        'stealnumber',  // Stelnr
+                        'art',          // Art
+                        'plate_number', // Plate Number
+                        'forste_gang'   // Første gang
+                    ];
+                    fieldsToReset.forEach(fieldId => {
+                        const field = document.getElementById(fieldId);
+                        if (field) field.value = '';
+                    });
+
+                    // Increment file number again if needed (or just use the one we set above)
+                    // We already set fileNumberInput.value and localStorage above, so we are good.
                 } else {
                     alert('Error downloading PDF');
                 }
             } catch (error) {
-                console.error('Download error:', error);
-                alert('Error downloading PDF: ' + error.message);
+                console.error('Error:', error);
+                alert('An error occurred. check console.');
             }
         });
         // -------------------------------
@@ -1122,124 +1731,153 @@
             // Get font sizes
             const topFont = parseFloat(document.getElementById('main_top_fontsize')?.value || 14);
             const dateFont = parseFloat(document.getElementById('main_date_fontsize')?.value || 11);
+            const vehicleFont = parseFloat(document.getElementById('main_vehicle_fontsize')?.value || 11);
 
             // Scale font for canvas
             const scaledTopFont = topFont / mainScaleRatio;
             const scaledDateFont = dateFont / mainScaleRatio;
+            const scaledVehicleFont = vehicleFont / mainScaleRatio;
 
             mainPreviewCtx.textBaseline = 'top';
 
-            // Get coordinates
-            const r1_x0 = parseFloat(document.getElementById('r1_x0')?.value || 18) / mainScaleRatio;
-            const r1_y0 = parseFloat(document.getElementById('r1_y0')?.value || 72) / mainScaleRatio;
-            const r1_x1 = parseFloat(document.getElementById('r1_x1')?.value || 580) / mainScaleRatio;
-            const r1_y1 = parseFloat(document.getElementById('r1_y1')?.value || 138) / mainScaleRatio;
-            const r1_off_x = parseFloat(document.getElementById('r1_off_x')?.value || 15) / mainScaleRatio;
-            const r1_off_y = parseFloat(document.getElementById('r1_off_y')?.value || 8) / mainScaleRatio;
+            function drawArea(prefix, text, fontSize) {
+                const x0 = parseFloat(document.getElementById(`${prefix}_x0`)?.value || 0) / mainScaleRatio;
+                const y0 = parseFloat(document.getElementById(`${prefix}_y0`)?.value || 0) / mainScaleRatio;
+                const x1 = parseFloat(document.getElementById(`${prefix}_x1`)?.value || 0) / mainScaleRatio;
+                const y1 = parseFloat(document.getElementById(`${prefix}_y1`)?.value || 0) / mainScaleRatio;
+                const offX = parseFloat(document.getElementById(`${prefix}_off_x`)?.value || 0) / mainScaleRatio;
+                const offY = parseFloat(document.getElementById(`${prefix}_off_y`)?.value || 0) / mainScaleRatio;
 
-            const r2_x0 = parseFloat(document.getElementById('r2_x0')?.value || 142) / mainScaleRatio;
-            const r2_y0 = parseFloat(document.getElementById('r2_y0')?.value || 503) / mainScaleRatio;
-            const r2_x1 = parseFloat(document.getElementById('r2_x1')?.value || 288) / mainScaleRatio;
-            const r2_y1 = parseFloat(document.getElementById('r2_y1')?.value || 519) / mainScaleRatio;
-            const r2_off_x = parseFloat(document.getElementById('r2_off_x')?.value || -2) / mainScaleRatio;
-            const r2_off_y = parseFloat(document.getElementById('r2_off_y')?.value || -2) / mainScaleRatio;
+                if (x0 === 0 && x1 === 0) return;
 
-            // Get text content
-            const topName = document.getElementById('top_name')?.value || '';
-            const dateText = document.getElementById('second_section')?.value || '';
+                // Draw Solid Whiteout Box
+                mainPreviewCtx.fillStyle = '#ffffff';
+                mainPreviewCtx.fillRect(x0, y0, x1 - x0, y1 - y0);
 
-            // Draw Area 1 (Top Name)
-            mainPreviewCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            mainPreviewCtx.fillRect(r1_x0, r1_y0, r1_x1 - r1_x0, r1_y1 - r1_y0);
-            mainPreviewCtx.strokeStyle = 'rgba(0, 150, 136, 0.8)';
-            mainPreviewCtx.lineWidth = 1;
-            mainPreviewCtx.strokeRect(r1_x0, r1_y0, r1_x1 - r1_x0, r1_y1 - r1_y0);
+                // Optional: Draw subtle border for development/clarity
+                mainPreviewCtx.strokeStyle = 'rgba(79, 70, 229, 0.3)';
+                mainPreviewCtx.lineWidth = 1;
+                mainPreviewCtx.strokeRect(x0, y0, x1 - x0, y1 - y0);
 
-            if (topName) {
-                mainPreviewCtx.fillStyle = 'black';
-                mainPreviewCtx.font = `bold ${scaledTopFont}px Arial, sans-serif`;
-                // Split by newlines and draw each line
-                const lines = topName.split('\n');
-                lines.forEach((line, i) => {
-                    mainPreviewCtx.fillText(line, r1_x0 + r1_off_x, r1_y0 + r1_off_y + (i * scaledTopFont * 1.2));
-                });
+                if (text) {
+                    mainPreviewCtx.fillStyle = 'black';
+                    mainPreviewCtx.font = `bold ${fontSize}px "Helvetica", "Arial", sans-serif`;
+                    mainPreviewCtx.textAlign = 'left';
+                    mainPreviewCtx.textBaseline = 'top';
+
+                    const padding = 5; // Standard padding
+                    const startX = x0 + padding + offX;
+                    const startY = y0 + padding + offY;
+
+                    // Handle multiline for r1 (Top Name)
+                    if (prefix === 'r1') {
+                        const lines = text.split('\n');
+                        const lineHeight = fontSize * 1.2;
+
+                        lines.forEach((line, i) => {
+                            mainPreviewCtx.fillText(line, startX, startY + (i * lineHeight));
+                        });
+                    } else {
+                        mainPreviewCtx.fillText(text, startX, startY);
+                    }
+                }
             }
 
-            // Draw Area 2 (Date)
-            mainPreviewCtx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            mainPreviewCtx.fillRect(r2_x0, r2_y0, r2_x1 - r2_x0, r2_y1 - r2_y0);
-            mainPreviewCtx.strokeStyle = 'rgba(0, 150, 136, 0.8)';
-            mainPreviewCtx.lineWidth = 1;
-            mainPreviewCtx.strokeRect(r2_x0, r2_y0, r2_x1 - r2_x0, r2_y1 - r2_y0);
+            // Draw all areas
+            drawArea('r1', document.getElementById('top_name')?.value, scaledTopFont);
+            drawArea('r2', document.getElementById('second_section')?.value, scaledDateFont);
+            drawArea('r3', document.getElementById('marke')?.value, scaledVehicleFont);
+            drawArea('r4', document.getElementById('model')?.value, scaledVehicleFont);
+            drawArea('r5', document.getElementById('stealnumber')?.value, scaledVehicleFont);
+            drawArea('r6', document.getElementById('art')?.value, scaledVehicleFont);
+            drawArea('r7', document.getElementById('forste_gang')?.value, scaledVehicleFont);
+            drawArea('r8', document.getElementById('plate_number')?.value, scaledVehicleFont);
+        }
 
-            if (dateText) {
-                mainPreviewCtx.fillStyle = 'black';
-                mainPreviewCtx.font = `bold ${scaledDateFont}px Arial, sans-serif`;
-                mainPreviewCtx.fillText(dateText, r2_x0 + r2_off_x, r2_y0 + r2_off_y);
+        async function loadMainPDFPreview(formData, url = '/render_page') {
+            try {
+                const response = await fetch(url, { method: 'POST', body: formData });
+                if (!response.ok) throw new Error(await response.text());
+                const data = await response.json();
+                if (data.image) {
+                    mainPreviewContainer.style.display = 'block';
+                    mainPdfImage = new Image();
+                    mainPdfImage.onload = () => {
+                        let containerWidth = mainPreviewContainer.clientWidth - 16;
+                        if (containerWidth <= 0) {
+                            containerWidth = mainPreviewContainer.parentElement?.clientWidth - 32 || 600;
+                        }
+                        mainScaleRatio = data.width / containerWidth;
+                        mainPreviewCanvas.width = containerWidth;
+                        mainPreviewCanvas.height = data.height / mainScaleRatio;
+                        drawMainPreview();
+                    };
+                    mainPdfImage.src = 'data:image/png;base64,' + data.image;
+
+                    // Auto-fill extracted fields
+                    if (enableDateFieldsCheckbox?.checked) {
+                        if (data.plate_number) {
+                            const plateInput = document.getElementById('plate_number');
+                            if (plateInput) plateInput.value = data.plate_number;
+                        }
+                        if (data.date_range) {
+                            if (dateRangeInput) {
+                                dateRangeInput.value = data.date_range;
+                                dateRangeInput.dispatchEvent(new Event('input'));
+                            }
+                        }
+                        // Vehicle details
+                        if (data.marke) document.getElementById('marke').value = data.marke;
+                        if (data.model) document.getElementById('model').value = data.model;
+                        if (data.stealnumber) document.getElementById('stealnumber').value = data.stealnumber;
+                        if (data.art) document.getElementById('art').value = data.art;
+                        if (data.forste_gang) document.getElementById('forste_gang').value = data.forste_gang;
+
+                        // Trigger preview update
+                        drawMainPreview();
+                    }
+                }
+            } catch (error) {
+                console.error('Main preview error:', error);
+                alert('Error loading main preview: ' + error.message);
             }
+        }
+
+        // New Load Template Button
+        const loadMainTemplateBtn = document.getElementById('load-main-template-btn');
+        if (loadMainTemplateBtn) {
+            loadMainTemplateBtn.addEventListener('click', () => {
+                loadMainPDFPreview(new FormData(), '/render_main_template');
+            });
         }
 
         // Load preview button
         if (mainPreviewBtn) {
-            mainPreviewBtn.addEventListener('click', async () => {
+            mainPreviewBtn.addEventListener('click', () => {
                 const fileInput = document.getElementById('pdf_file');
                 if (!fileInput || !fileInput.files.length) {
-                    alert('Please upload a PDF file first');
+                    // Alert if no file AND no template exists, but since we have a separate button, let's keep this for manual uploads
+                    alert('Please upload a PDF file first or use "Load Template" button');
                     return;
                 }
 
                 const formData = new FormData();
                 formData.append('pdf_file', fileInput.files[0]);
-
-                try {
-                    const response = await fetch('/render_page', { method: 'POST', body: formData });
-                    const data = await response.json();
-                    if (data.image) {
-                        // Show container BEFORE calculating width
-                        mainPreviewContainer.style.display = 'block';
-
-                        mainPdfImage = new Image();
-                        mainPdfImage.onload = () => {
-                            // Get container width (use parent if container width is 0)
-                            let containerWidth = mainPreviewContainer.clientWidth - 16;
-                            if (containerWidth <= 0) {
-                                containerWidth = mainPreviewContainer.parentElement?.clientWidth - 32 || 600;
-                            }
-                            mainScaleRatio = data.width / containerWidth;
-                            mainPreviewCanvas.width = containerWidth;
-                            mainPreviewCanvas.height = data.height / mainScaleRatio;
-                            drawMainPreview();
-                        };
-                        mainPdfImage.src = 'data:image/png;base64,' + data.image;
-
-                        // Auto-fill plate number if extracted from PDF
-                        if (data.plate_number) {
-                            const plateInput = document.getElementById('plate_number');
-                            if (plateInput) {
-                                plateInput.value = data.plate_number;
-                            }
-                        }
-
-                        // Auto-fill date range and trigger Left/Right date parsing
-                        if (data.date_range) {
-                            const dateInput = document.getElementById('second_section');
-                            if (dateInput) {
-                                dateInput.value = data.date_range;
-                                // Trigger input event to auto-fill Left Date and Right Date
-                                dateInput.dispatchEvent(new Event('input'));
-                            }
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error loading preview:', e);
-                }
+                loadMainPDFPreview(formData, '/render_page');
             });
         }
 
         // Add input listeners for Main PDF preview updates
-        ['top_name', 'second_section', 'main_top_fontsize', 'main_date_fontsize',
+        ['top_name', 'second_section', 'marke', 'model', 'stealnumber', 'art', 'forste_gang',
+            'main_top_fontsize', 'main_date_fontsize', 'main_vehicle_fontsize',
             'r1_x0', 'r1_y0', 'r1_x1', 'r1_y1', 'r1_off_x', 'r1_off_y',
-            'r2_x0', 'r2_y0', 'r2_x1', 'r2_y1', 'r2_off_x', 'r2_off_y'].forEach(id => {
+            'r2_x0', 'r2_y0', 'r2_x1', 'r2_y1', 'r2_off_x', 'r2_off_y',
+            'r3_x0', 'r3_y0', 'r3_x1', 'r3_y1', 'r3_off_x', 'r3_off_y',
+            'r4_x0', 'r4_y0', 'r4_x1', 'r4_y1', 'r4_off_x', 'r4_off_y',
+            'r5_x0', 'r5_y0', 'r5_x1', 'r5_y1', 'r5_off_x', 'r5_off_y',
+            'r6_x0', 'r6_y0', 'r6_x1', 'r6_y1', 'r6_off_x', 'r6_off_y',
+            'r7_x0', 'r7_y0', 'r7_x1', 'r7_y1', 'r7_off_x', 'r7_off_y',
+            'r8_x0', 'r8_y0', 'r8_x1', 'r8_y1', 'r8_off_x', 'r8_off_y'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('input', drawMainPreview);
             });
@@ -1295,20 +1933,16 @@
                 // Check which mode is selected
                 const mode = document.querySelector('input[name="main_calib_mode"]:checked')?.value || '1';
 
-                if (mode === '1') {
-                    // Top Name Area
-                    document.getElementById('r1_x0').value = x0;
-                    document.getElementById('r1_y0').value = y0;
-                    document.getElementById('r1_x1').value = x1;
-                    document.getElementById('r1_y1').value = y1;
-                } else {
-                    // Date Area
-                    document.getElementById('r2_x0').value = x0;
-                    document.getElementById('r2_y0').value = y0;
-                    document.getElementById('r2_x1').value = x1;
-                    document.getElementById('r2_y1').value = y1;
+                const targetPrefix = 'r' + mode;
+                const targetX0 = document.getElementById(`${targetPrefix}_x0`);
+                if (targetX0) {
+                    targetX0.value = x0;
+                    document.getElementById(`${targetPrefix}_y0`).value = y0;
+                    document.getElementById(`${targetPrefix}_x1`).value = x1;
+                    document.getElementById(`${targetPrefix}_y1`).value = y1;
+                    // Trigger input event to update preview
+                    targetX0.dispatchEvent(new Event('input'));
                 }
-
                 // Redraw preview with new coordinates
                 drawMainPreview();
             });
@@ -1465,17 +2099,43 @@
             'tpl2_dr_x0', 'tpl2_dr_y0', 'tpl2_dr_x1', 'tpl2_dr_y1', 'tpl2_dr_off_x', 'tpl2_dr_off_y'
         ];
 
-        // Load template settings from localStorage
+        // Default coordinates for each template type (MUST be defined before functions that use them)
+        const bigDefaults = {
+            tpl2_un_x0: 57, tpl2_un_y0: 31, tpl2_un_x1: 804, tpl2_un_y1: 203,
+            tpl2_dn_x0: 57, tpl2_dn_y0: 321, tpl2_dn_x1: 804, tpl2_dn_y1: 481,
+            tpl2_ul_x0: 72, tpl2_ul_y0: 225, tpl2_ul_x1: 176, tpl2_ul_y1: 259,
+            tpl2_ur_x0: 666, tpl2_ur_y0: 225, tpl2_ur_x1: 777, tpl2_ur_y1: 259,
+            tpl2_dl_x0: 72, tpl2_dl_y0: 514, tpl2_dl_x1: 176, tpl2_dl_y1: 545,
+            tpl2_dr_x0: 666, tpl2_dr_y0: 513, tpl2_dr_x1: 777, tpl2_dr_y1: 550,
+            tpl2_number_fontsize: 188, tpl2_date_fontsize: 31,
+            tpl2_un_off_x: 0, tpl2_un_off_y: 0, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
+            tpl2_ul_off_x: 0, tpl2_ul_off_y: 0, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
+            tpl2_dl_off_x: 0, tpl2_dl_off_y: 0, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0
+        };
+
+        const smallDefaults = {
+            tpl2_un_x0: 43, tpl2_un_y0: 115, tpl2_un_x1: 529, tpl2_un_y1: 219,
+            tpl2_ul_x0: 46, tpl2_ul_y0: 281, tpl2_ul_x1: 151, tpl2_ul_y1: 309,
+            tpl2_ur_x0: 431, tpl2_ur_y0: 276, tpl2_ur_x1: 538, tpl2_ur_y1: 309,
+            tpl2_dn_x0: 0, tpl2_dn_y0: 0, tpl2_dn_x1: 0, tpl2_dn_y1: 0,
+            tpl2_dl_x0: 0, tpl2_dl_y0: 0, tpl2_dl_x1: 0, tpl2_dl_y1: 0,
+            tpl2_dr_x0: 0, tpl2_dr_y0: 0, tpl2_dr_x1: 0, tpl2_dr_y1: 0,
+            tpl2_number_fontsize: 121, tpl2_date_fontsize: 31,
+            tpl2_un_off_x: 0, tpl2_un_off_y: 0, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
+            tpl2_ul_off_x: 0, tpl2_ul_off_y: 0, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
+            tpl2_dl_off_x: 0, tpl2_dl_off_y: 0, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0
+        };
+
+        // Load template settings from localStorage (with template type)
         function loadTpl2Settings() {
-            [...tpl2TextIds, ...tpl2FontIds, ...tpl2CoordIds].forEach(id => {
-                const val = localStorage.getItem('pdf_editor_' + id);
-                if (val !== null) {
-                    const el = document.getElementById(id);
-                    if (el) el.value = val;
-                }
-            });
+            // First check which template type was last used
+            const savedType = localStorage.getItem('pdf_editor_template_type') || 'big';
+            const radio = document.querySelector(`input[name="template_type"][value="${savedType}"]`);
+            if (radio) radio.checked = true;
+
+            // Load values for that template type
+            loadTpl2SettingsForType(savedType);
         }
-        loadTpl2Settings();
 
         // Get current template type
         function getCurrentTemplateType() {
@@ -1497,14 +2157,24 @@
         // Load template settings for a specific template type
         function loadTpl2SettingsForType(templateType) {
             const prefix = 'pdf_editor_' + templateType + '_';
-            [...tpl2TextIds, ...tpl2FontIds, ...tpl2CoordIds].forEach(id => {
-                const val = localStorage.getItem(prefix + id);
-                if (val !== null) {
-                    const el = document.getElementById(id);
-                    if (el) el.value = val;
+            const defaults = templateType === 'small' ? smallDefaults : bigDefaults;
+
+            [...tpl2FontIds, ...tpl2CoordIds].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    const savedVal = localStorage.getItem(prefix + id);
+                    // Use saved value if exists, otherwise use default
+                    if (savedVal !== null) {
+                        el.value = savedVal;
+                    } else if (defaults[id] !== undefined) {
+                        el.value = defaults[id];
+                    }
                 }
             });
         }
+
+        // Now call loadTpl2Settings after all functions and defaults are defined
+        loadTpl2Settings();
 
         if (saveTemplateBtn2) {
             saveTemplateBtn2.addEventListener('click', () => {
@@ -1521,24 +2191,6 @@
         const coordDr = document.getElementById('coord-dr');
         const inputDn = document.getElementById('input-dn');
         const inputDownDates = document.getElementById('input-down-dates');
-
-        // Default coordinates for each template type
-        const bigDefaults = {
-            tpl2_un_x0: 57, tpl2_un_y0: 31, tpl2_un_x1: 804, tpl2_un_y1: 203,
-            tpl2_dn_x0: 57, tpl2_dn_y0: 321, tpl2_dn_x1: 804, tpl2_dn_y1: 481,
-            tpl2_ul_x0: 72, tpl2_ul_y0: 225, tpl2_ul_x1: 176, tpl2_ul_y1: 259,
-            tpl2_ur_x0: 666, tpl2_ur_y0: 225, tpl2_ur_x1: 777, tpl2_ur_y1: 259,
-            tpl2_dl_x0: 72, tpl2_dl_y0: 514, tpl2_dl_x1: 176, tpl2_dl_y1: 545,
-            tpl2_dr_x0: 666, tpl2_dr_y0: 513, tpl2_dr_x1: 777, tpl2_dr_y1: 550,
-            tpl2_number_fontsize: 188, tpl2_date_fontsize: 31
-        };
-
-        const smallDefaults = {
-            tpl2_un_x0: 43, tpl2_un_y0: 115, tpl2_un_x1: 529, tpl2_un_y1: 219,
-            tpl2_ul_x0: 46, tpl2_ul_y0: 281, tpl2_ul_x1: 151, tpl2_ul_y1: 309,
-            tpl2_ur_x0: 431, tpl2_ur_y0: 276, tpl2_ur_x1: 538, tpl2_ur_y1: 309,
-            tpl2_number_fontsize: 121, tpl2_date_fontsize: 31
-        };
 
         function updateTemplateType(type) {
             const isSmall = type === 'small';
@@ -1563,20 +2215,11 @@
                 }
             });
 
-            // Apply ONLY font size defaults when switching templates
-            // (coordinates are only loaded via Load Template button to avoid mixing)
-            const defaults = isSmall ? smallDefaults : bigDefaults;
-            const prefix = 'pdf_editor_' + type + '_';
+            // Load ALL settings for this template type (coordinates + fonts)
+            loadTpl2SettingsForType(type);
 
-            // Only auto-update font sizes, not coordinates
-            ['tpl2_number_fontsize', 'tpl2_date_fontsize'].forEach(key => {
-                const el = document.getElementById(key);
-                if (el) {
-                    const savedVal = localStorage.getItem(prefix + key);
-                    // Use saved value if exists, otherwise use default
-                    el.value = savedVal !== null ? savedVal : defaults[key];
-                }
-            });
+            // Save the template type preference
+            localStorage.setItem('pdf_editor_template_type', type);
         }
 
         templateTypeRadios.forEach(radio => {
