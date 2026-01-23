@@ -5,11 +5,54 @@ import io
 
 import base64
 
+# ... (previous imports)
+import json
+
 app = Flask(__name__)
+
+# --- PLATE STORAGE ---
+PLATES_FILE = os.path.join(os.path.dirname(__file__), 'plates.json')
+
+def load_plates():
+    if not os.path.exists(PLATES_FILE):
+        return []
+    try:
+        with open(PLATES_FILE, 'r') as f:
+            return json.load(f)
+    except:
+        return []
+
+def save_plate_to_db(plate):
+    plates = load_plates()
+    if plate not in plates:
+        plates.append(plate)
+        with open(PLATES_FILE, 'w') as f:
+            json.dump(plates, f)
+        return True
+    return False
 
 @app.route('/health')
 def health():
     return 'OK', 200
+
+@app.route('/check_plate', methods=['GET'])
+def check_plate():
+    plate = request.args.get('plate', '').strip()
+    if not plate:
+        return {'exists': False}
+    plates = load_plates()
+    return {'exists': plate in plates}
+
+@app.route('/save_plate', methods=['POST'])
+def save_plate_route():
+    data = request.json
+    plate = data.get('plate', '').strip()
+    if plate:
+        save_plate_to_db(plate)
+        return {'success': True}
+    return {'success': False}, 400
+
+# ... (rest of the file)
 
 @app.route('/render_template', methods=['POST'])
 def render_template_pdf():

@@ -455,6 +455,9 @@
                     <div class="form-group" style="margin: 0;">
                         <label for="plate_number">Plate Number</label>
                         <input type="text" name="plate_number" id="plate_number" placeholder="e.g. 1881592">
+                        <small id="plate-warning"
+                            style="color: #ef4444; font-size: 0.75rem; display: none; margin-top: 4px;">⚠️ Plate number
+                            already exists!</small>
                     </div>
                 </div>
 
@@ -746,6 +749,48 @@
                                     }
                                 }
                             });
+                        }
+                    })();
+
+                    // Plate Number Duplicate Check & Storage
+                    (function () {
+                        const plateInput = document.getElementById('plate_number');
+                        const warningEl = document.getElementById('plate-warning');
+                        const downloadBtn = document.getElementById('download-btn');
+
+                        // 1. Check for duplicates on input
+                        if (plateInput) {
+                            plateInput.addEventListener('input', debounce(function () {
+                                const plate = this.value.trim();
+                                if (plate.length > 2) {
+                                    fetch(`/check_plate?plate=${encodeURIComponent(plate)}`)
+                                        .then(res => res.json())
+                                        .then(data => {
+                                            if (data.exists) {
+                                                warningEl.style.display = 'block';
+                                                plateInput.style.borderColor = '#ef4444';
+                                            } else {
+                                                warningEl.style.display = 'none';
+                                                plateInput.style.borderColor = ''; // reset
+                                            }
+                                        })
+                                        .catch(err => console.error('Error checking plate:', err));
+                                } else {
+                                    warningEl.style.display = 'none';
+                                    plateInput.style.borderColor = '';
+                                }
+                            }, 100));
+                        }
+
+
+
+                        function debounce(func, wait) {
+                            let timeout;
+                            return function () {
+                                const context = this, args = arguments;
+                                clearTimeout(timeout);
+                                timeout = setTimeout(() => func.apply(context, args), wait);
+                            };
                         }
                     })();
                 </script>
@@ -1586,6 +1631,20 @@
 
             if (hasError) return;
 
+            // Save plate number to DB
+            const plateVal = document.getElementById('plate_number')?.value.trim();
+            if (plateVal) {
+                try {
+                    await fetch('/save_plate', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ plate: plateVal })
+                    });
+                } catch (e) {
+                    console.error('Error saving plate:', e);
+                }
+            }
+
             // Create form data and add action
             const formData = new FormData(form);
             formData.set('action', 'download');
@@ -1715,7 +1774,15 @@
                     ];
                     fieldsToReset.forEach(fieldId => {
                         const field = document.getElementById(fieldId);
-                        if (field) field.value = '';
+                        if (field) {
+                            field.value = '';
+                            // Clear error styles if any
+                            if (fieldId === 'plate_number') {
+                                field.style.borderColor = '';
+                                const warningEl = document.getElementById('plate-warning');
+                                if (warningEl) warningEl.style.display = 'none';
+                            }
+                        }
                     });
 
                     // Increment file number again if needed (or just use the one we set above)
