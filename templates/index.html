@@ -1551,11 +1551,189 @@
             }
         }
 
-        // Top Name - clear when not empty
+        // Top Name - clear when not empty & Smart Paste
         if (topNameField) {
             topNameField.addEventListener('input', () => {
                 if (topNameField.value.trim()) {
                     clearErrorStyle(topNameField);
+                }
+            });
+
+            // Smart Paste Logic
+            topNameField.addEventListener('paste', (e) => {
+                const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                console.log('Pasted data:', pasteData); // DEBUG
+
+                // key phrases to identify if this is the structured format
+                const markers = [
+                    'Date:',
+                    'left date and right date',
+                    'Mærke:',
+                    'Model:',
+                    'Stelnr. (VIN',
+                    'Plate Number:'
+                ];
+
+                // Check if at least 3 markers exist to confirm it's the expected format
+                const matchCount = markers.reduce((count, marker) =>
+                    pasteData.includes(marker) ? count + 1 : count, 0);
+
+                console.log('Match count:', matchCount); // DEBUG
+
+                if (matchCount >= 3) {
+                    e.preventDefault(); // Stop default paste
+                    console.log('Smart paste triggered (Labeled)'); // DEBUG
+
+                    // Regex to extract sections (case insensitive, multiline)
+                    const extract = (key) => {
+                        // Look for Key:\s*(content)\s*(NextKey|$)
+                        // We use a simplified approach: Split by known keys
+                        // Escape special regex chars in key just in case, but we pass pre-escaped keys for complex ones
+                        const regex = new RegExp(`${key}\\s*([\\s\\S]*?)(?=(?:Top Name:|Date:|left date and right date|Mærke:|Model:|Stelnr\\.|Art:|Plate Number:|$))`, 'i');
+                        const match = pasteData.match(regex);
+                        return match ? match[1].trim() : '';
+                    };
+
+                    // 1. Top Name
+                    const name = extract('Top Name:');
+                    if (name) topNameField.value = name;
+
+                    // 2. Date Range
+                    const dateRange = extract('Date:');
+                    if (dateRange) {
+                        const dateRangeInput = document.getElementById('second_section');
+                        if (dateRangeInput) dateRangeInput.value = dateRange;
+                    }
+
+                    // 3. Left/Right Dates
+                    // Loose match on key
+                    const lrDates = extract('left date and right date :') || extract('left date and right date:');
+                    if (lrDates) {
+                        const parts = lrDates.split(/\s+/);
+                        if (parts.length >= 1) document.getElementById('tpl_left_date').value = parts[0];
+                        if (parts.length >= 2) document.getElementById('tpl_right_date').value = parts[1];
+                    }
+
+                    // 4. Vehicle Info
+                    const marke = extract('Mærke:');
+                    if (marke) document.getElementById('marke').value = marke;
+
+                    const model = extract('Model:');
+                    if (model && model !== '-') document.getElementById('model').value = model;
+
+                    const vinContent = extract('Stelnr\\. \\(VIN:');
+                    if (vinContent) document.getElementById('stealnumber').value = vinContent;
+
+                    const art = extract('Art:');
+                    if (art) document.getElementById('art').value = art;
+
+                    const plate = extract('Plate Number:');
+                    if (plate) {
+                        const pInput = document.getElementById('plate_number');
+                        if (pInput) {
+                            pInput.value = plate;
+                            // Trigger input event to check for duplicates
+                            pInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                    }
+
+                    // Trigger live preview update
+                    topNameField.dispatchEvent(new Event('input'));
+                } else {
+                    // Fallback: Try to parse Unlabeled format (just lines)
+                    // Structure seems to be blocks separated by empty lines or just mapped logic.
+                    // We'll use patterns to identify lines.
+                    const lines = pasteData.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+
+                    // Heuristics
+                    const dateRangeIdx = lines.findIndex(l => l.includes('til') && /\d+-\d+-\d+/.test(l));
+
+                    if (dateRangeIdx !== -1 && lines.length >= 5) {
+                        e.preventDefault();
+                        console.log('Smart paste triggered (Unlabeled)');
+
+                        // Assume everything BEFORE date range is Top Name
+                        const nameLines = lines.slice(0, dateRangeIdx);
+                        if (nameLines.length > 0) {
+                            topNameField.value = nameLines.join('\n');
+                        }
+
+                        // Date Range
+                        const dateRangeInput = document.getElementById('second_section');
+                        if (dateRangeInput) dateRangeInput.value = lines[dateRangeIdx];
+
+                        // Next line(s) usually contain L/R Dates (e.g. "270126 020226")
+                        // But we should check if the next line actually MATCHES that format.
+                        let vehicleStartIdx = dateRangeIdx + 1;
+                        if (dateRangeIdx + 1 < lines.length) {
+                            const potentialLRLine = lines[dateRangeIdx + 1];
+                            // Check if it looks like two 6-digit numbers (or at least one)
+                            const lrParts = potentialLRLine.split(/\s+/);
+                            if (lrParts.length >= 1 && /^\d{6}$/.test(lrParts[0])) {
+                                // Valid L/R Date line found
+                                document.getElementById('tpl_left_date').value = lrParts[0];
+                                if (lrParts.length >= 2) document.getElementById('tpl_right_date').value = lrParts[1];
+                                vehicleStartIdx = dateRangeIdx + 2; // Vehicle info starts after this
+                            }
+                        }
+
+                        // Try to identify Vehicle Info in remaining lines
+                        // Look for VIN (17 chars)
+                        const vinIdx = lines.findIndex((l, i) => i >= vehicleStartIdx && l.length === 17 && /[A-Z0-9]{17}/.test(l));
+
+                        if (vinIdx !== -1) {
+                            document.getElementById('stealnumber').value = lines[vinIdx];
+
+                            // Vehicle lines are everything between Date/LR-Date and VIN
+                            // But we need to handle optional "Forste" line.
+                            let vehicleLines = lines.slice(vehicleStartIdx, vinIdx);
+
+                            // Check for "Forste" line
+                            const forsteIdx = vehicleLines.findIndex(l => /forste|første/i.test(l));
+                            if (forsteIdx !== -1) {
+                                const forsteLine = vehicleLines[forsteIdx];
+                                // Extract date like 19-08-2016
+                                const dateMatch = forsteLine.match(/(\d{2}-\d{2}-\d{4})/);
+                                if (dateMatch) {
+                                    document.getElementById('forste_gang').value = dateMatch[1];
+                                }
+                                // Remove this line from vehicle lines so it's not detected as Marke/Model
+                                vehicleLines.splice(forsteIdx, 1);
+                            }
+
+                            // Filter out empty lines just in case
+                            vehicleLines = vehicleLines.filter(l => l.trim().length > 0);
+
+                            console.log('Vehicle lines:', vehicleLines); // DEBUG
+
+                            if (vehicleLines.length >= 1) document.getElementById('marke').value = vehicleLines[0];
+                            if (vehicleLines.length >= 2) document.getElementById('model').value = vehicleLines[1];
+
+                            // Art is usually after VIN
+                            if (vinIdx + 1 < lines.length) {
+                                document.getElementById('art').value = lines[vinIdx + 1];
+                            }
+                        }
+
+                        // Plate is usually last line and looks like digits
+                        // Search from the end for a line that looks like a plate (pure digits or small alphanumeric)
+                        // Ignore "Lastbil" (Art) if it was last.
+                        for (let i = lines.length - 1; i > vinIdx; i--) {
+                            const line = lines[i];
+                            // Plate format: 1-8 chars, mostly digits, maybe spaces. Not "Lastbil".
+                            // User example: "5000182" (7 digits).
+                            if (/^\d[\d\s]*$/.test(line) && line.replace(/\s/g, '').length > 2 && line.replace(/\s/g, '').length < 10) {
+                                const pInput = document.getElementById('plate_number');
+                                if (pInput) {
+                                    pInput.value = line.replace(/\s/g, '');
+                                    pInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                }
+                                break; // Found it
+                            }
+                        }
+
+                        topNameField.dispatchEvent(new Event('input'));
+                    }
                 }
             });
         }
