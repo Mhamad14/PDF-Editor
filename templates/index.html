@@ -1580,6 +1580,18 @@
 
                 console.log('Match count:', matchCount); // DEBUG
 
+                // Detect Template Size (Big/Small)
+                // Look for "Small", "Lille", "Sættevogn" (always small), or specific size indicators
+                const isSmall = /small|lille|lilen|sættevogn/i.test(pasteData) || /template:\s*small/i.test(pasteData);
+                const smallRadio = document.querySelector('input[name="main_template_type"][value="small"]');
+                const bigRadio = document.querySelector('input[name="main_template_type"][value="big"]');
+
+                if (isSmall && smallRadio) {
+                    smallRadio.checked = true;
+                } else if (!isSmall && bigRadio) {
+                    bigRadio.checked = true;
+                }
+
                 if (matchCount >= 3) {
                     e.preventDefault(); // Stop default paste
                     console.log('Smart paste triggered (Labeled)'); // DEBUG
@@ -1806,6 +1818,19 @@
                     dateRangeField.style.boxShadow = '';
                 }
             }
+
+            // Validate Plate Number (Required)
+            const plateNumberField = document.getElementById('plate_number');
+            if (plateNumberField && !plateNumberField.value.trim()) {
+                plateNumberField.style.border = '2px solid #ef4444';
+                plateNumberField.style.boxShadow = '0 0 8px rgba(239, 68, 68, 0.5)';
+                if (!hasError) plateNumberField.focus();
+                hasError = true;
+            } else if (plateNumberField) {
+                plateNumberField.style.border = '';
+                plateNumberField.style.boxShadow = '';
+            }
+
 
             if (hasError) return;
 
