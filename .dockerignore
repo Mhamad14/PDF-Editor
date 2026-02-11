@@ -3,3 +3,11 @@ fly.toml
 __pycache__/
 .envrc
 .venv/
+.vscode/
+.github/
+*.pyc
+render.yaml
+test_font.py
+font_test.pdf
+sample.pdf
+edited_output*.pdf
