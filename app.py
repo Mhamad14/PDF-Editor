@@ -7,11 +7,35 @@ import base64
 
 # ... (previous imports)
 import json
+import math
 
 app = Flask(__name__)
 
 # --- PLATE STORAGE ---
 PLATES_FILE = os.path.join(os.path.dirname(__file__), 'plates.json')
+
+def flatten_page_to_image(doc, page_index=0, dpi=300):
+    """
+    Rasterize an entire page to a single image, then replace the page
+    with a new page containing only that image. This removes all text
+    objects, fonts, and layered content — output looks identical to
+    the original image-based PDF structure.
+    """
+    page = doc[page_index]
+    page_rect = page.rect
+    
+    # Rasterize the full page at high DPI
+    pix = page.get_pixmap(dpi=dpi, alpha=False)
+    img_data = pix.tobytes("png")
+    
+    # Delete the old page and insert a fresh one with same dimensions
+    doc.delete_page(page_index)
+    new_page = doc.new_page(pno=page_index, width=page_rect.width, height=page_rect.height)
+    
+    # Insert the rasterized image as a single full-page image
+    new_page.insert_image(new_page.rect, stream=img_data)
+    
+    return new_page
 
 def load_plates():
     if not os.path.exists(PLATES_FILE):
@@ -273,49 +297,60 @@ def generate_template():
         
         page = pdf_document[0]
         
+        # Preserve original metadata to avoid detection
+        original_metadata = pdf_document.metadata.copy() if pdf_document.metadata else {}
+        
         # Revert to original font for template as requested
         font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'arial-unicode-digits.ttf')
-        print(f"DEBUG: Loading font from {font_path}")
         template_font = fitz.Font(fontfile=font_path)
         
         template_color = (0, 0, 0)  # Black text
         
-        def add_text_with_whiteout(text, coords, fontsize):
+        # Collect all text items
+        text_items = []
+        
+        def queue_text_replacement(text, coords, fontsize):
             if not text.strip():
                 return
-            # Whiteout area
+            # Draw white rectangle to cover original content
             rect = fitz.Rect(coords['x0'], coords['y0'], coords['x1'], coords['y1'])
-            page.draw_rect(rect, color=(1,1,1), fill=(1,1,1), stroke_opacity=0)
+            page.draw_rect(rect, color=None, fill=(1, 1, 1))
             
-            # Add text with top-left orientation and 5px padding
-            tw = fitz.TextWriter(page.rect)
-            
-            # Top-left alignment with 5px padding
+            # Queue the text for adding
             text_x = coords['x0'] + 5 + coords['off_x']
-            # Position at top + padding + baseline offset
             text_y = coords['y0'] + 5 + (fontsize * 0.8) + coords['off_y']
-            
-            tw.append(fitz.Point(text_x, text_y), text, font=template_font, fontsize=fontsize)
-            tw.write_text(page, color=template_color)
+            text_items.append((text, text_x, text_y, fontsize))
         
-        # Apply text to areas based on template type
+        # Queue text replacements based on template type
         if template_type == 'big':
             # Big template: 6 areas
-            add_text_with_whiteout(plate_number, un_coords, number_fontsize)  # Up Number
-            add_text_with_whiteout(plate_number, dn_coords, number_fontsize)  # Down Number (same as plate)
-            add_text_with_whiteout(left_date, ul_coords, date_fontsize)       # Up-Left Date
-            add_text_with_whiteout(right_date, ur_coords, date_fontsize)      # Up-Right Date
-            add_text_with_whiteout(left_date, dl_coords, date_fontsize)       # Down-Left Date (same as left)
-            add_text_with_whiteout(right_date, dr_coords, date_fontsize)      # Down-Right Date (same as right)
+            queue_text_replacement(plate_number, un_coords, number_fontsize)
+            queue_text_replacement(plate_number, dn_coords, number_fontsize)
+            queue_text_replacement(left_date, ul_coords, date_fontsize)
+            queue_text_replacement(right_date, ur_coords, date_fontsize)
+            queue_text_replacement(left_date, dl_coords, date_fontsize)
+            queue_text_replacement(right_date, dr_coords, date_fontsize)
         else:
             # Small template: 3 areas
-            add_text_with_whiteout(plate_number, un_coords, number_fontsize)  # Up Number
-            add_text_with_whiteout(left_date, ul_coords, date_fontsize)       # Up-Left Date
-            add_text_with_whiteout(right_date, ur_coords, date_fontsize)      # Up-Right Date
+            queue_text_replacement(plate_number, un_coords, number_fontsize)
+            queue_text_replacement(left_date, ul_coords, date_fontsize)
+            queue_text_replacement(right_date, ur_coords, date_fontsize)
         
-        # Save to buffer
+        # Add replacement text using TextWriter
+        for text, tx, ty, fs in text_items:
+            tw = fitz.TextWriter(page.rect)
+            tw.append(fitz.Point(tx, ty), text, font=template_font, fontsize=fs)
+            tw.write_text(page, color=template_color)
+        
+        # Flatten entire page to a single image (removes all text/fonts — matches original structure)
+        flatten_page_to_image(pdf_document, page_index=0)
+        
+        # Restore original metadata
+        pdf_document.set_metadata(original_metadata)
+        
+        # Save to buffer with full cleanup
         output_buffer = io.BytesIO()
-        pdf_document.save(output_buffer)
+        pdf_document.save(output_buffer, garbage=4, deflate=True, clean=True)
         output_buffer.seek(0)
         
         filename = f'template_{template_type}_{plate_number or "output"}.pdf'
@@ -393,6 +428,9 @@ def index():
         if pdf_document and len(pdf_document) > 0:
             page = pdf_document[0]
 
+            # Preserve original metadata to avoid detection
+            original_metadata = pdf_document.metadata.copy() if pdf_document.metadata else {}
+
             # Use Helvetica.ttf as requested
             font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'Helvetica.ttf')
             custom_color = (20/255, 20/255, 60/255)
@@ -406,54 +444,59 @@ def index():
             color_name = (0x21/255, 0x21/255, 0x21/255)  # #212121 for Area 1 (Name)
             color_body = (0x14/255, 0x14/255, 0x3c/255)  # #14143c for rest of body
 
-            def add_main_text(text, prefix, fontsize, text_color, is_multiline=False):
+            # Collect all text items
+            main_text_items = []
+
+            def queue_main_text(text, prefix, fontsize, text_color, is_multiline=False):
                 if not text or not text.strip():
                     return
                 coords = areas.get(prefix)
                 if not coords or coords['x1'] == 0:
                     return
                 
-                # Whiteout
+                # Draw white rectangle to cover original content
                 rect = fitz.Rect(coords['x0'], coords['y0'], coords['x1'], coords['y1'])
-                page.draw_rect(rect, color=(1,1,1), fill=(1,1,1), stroke_opacity=0)
+                page.draw_rect(rect, color=None, fill=(1, 1, 1))
                 
-                box_width = abs(coords['x1'] - coords['x0'])
-                box_height = abs(coords['y1'] - coords['y0'])
-                
+                # Queue the text for adding
+                main_text_items.append((text, coords, fontsize, text_color, is_multiline))
+
+            # Queue all fields
+            queue_main_text(top_name, 'r1', fontsize_top, color_name, is_multiline=True)
+            queue_main_text(second_section, 'r2', fontsize_vehicle, color_body)
+            queue_main_text(marke, 'r3', fontsize_vehicle, color_body)
+            queue_main_text(model, 'r4', fontsize_vehicle, color_body)
+            queue_main_text(stealnumber, 'r5', fontsize_vehicle, color_body)
+            queue_main_text(art, 'r6', fontsize_vehicle, color_body)
+            queue_main_text(forste_gang, 'r7', fontsize_vehicle, color_body)
+            queue_main_text(plate_number, 'r8', fontsize_vehicle, color_body)
+
+            # Add replacement text using TextWriter
+            for text, coords, fontsize, text_color, is_multiline in main_text_items:
                 tw = fitz.TextWriter(page.rect)
                 if is_multiline:
                     line_height = fontsize * 1.2
                     lines = [l.strip() for l in text.split('\n') if l.strip()]
-                    # Top-left alignment with 5px padding
                     y_pos = coords['y0'] + 5 + fontsize + coords['off_y']
-                    
                     for line in lines:
                         x_pos = coords['x0'] + 5 + coords['off_x']
-                        text_point = fitz.Point(x_pos, y_pos)
-                        tw.append(text_point, line, font=custom_font, fontsize=fontsize)
+                        tw.append(fitz.Point(x_pos, y_pos), line, font=custom_font, fontsize=fontsize)
                         y_pos += line_height
                 else:
-                    # Top-left alignment with 5px padding
                     x_pos = coords['x0'] + 5 + coords['off_x']
-                    # y_pos using baseline offset
                     y_pos = coords['y0'] + 5 + (fontsize * 0.8) + coords['off_y']
-                    
-                    text_point = fitz.Point(x_pos, y_pos)
-                    tw.append(text_point, text, font=custom_font, fontsize=fontsize)
+                    tw.append(fitz.Point(x_pos, y_pos), text, font=custom_font, fontsize=fontsize)
                 tw.write_text(page, color=text_color)
 
-            # Render all fields
-            add_main_text(top_name, 'r1', fontsize_top, color_name, is_multiline=True)
-            add_main_text(second_section, 'r2', fontsize_vehicle, color_body)
-            add_main_text(marke, 'r3', fontsize_vehicle, color_body)
-            add_main_text(model, 'r4', fontsize_vehicle, color_body)
-            add_main_text(stealnumber, 'r5', fontsize_vehicle, color_body)
-            add_main_text(art, 'r6', fontsize_vehicle, color_body)
-            add_main_text(forste_gang, 'r7', fontsize_vehicle, color_body)
-            add_main_text(plate_number, 'r8', fontsize_vehicle, color_body)
+            # Flatten entire page to a single image (removes all text/fonts — matches original)
+            flatten_page_to_image(pdf_document, page_index=0)
+
+            # Restore original metadata
+            pdf_document.set_metadata(original_metadata)
 
             if action == 'preview':
-                pix = page.get_pixmap()
+                preview_page = pdf_document[0]  # get fresh reference after flatten
+                pix = preview_page.get_pixmap()
                 img_data = pix.tobytes("png")
                 img_b64 = base64.b64encode(img_data).decode('utf-8')
                 return render_template('index.html', preview_image=img_b64)
@@ -537,32 +580,44 @@ def index():
                     number_fontsize = 63
                     date_fontsize = 10
                 
-                # Helper function to add text at coordinates with whiteout and offsets
-                def add_template_text(text, x0, y0, x1, y1, off_x, off_y, fontsize):
-                    if text.strip():
-                        # Whiteout the area first to hide old content
-                        rect = fitz.Rect(x0, y0, x1, y1)
-                        template_page.draw_rect(rect, color=(1,1,1), fill=(1,1,1), stroke_opacity=0)
-                        
-                        # Calculate text position with offsets
-                        tw = fitz.TextWriter(template_page.rect)
-                        text_x = x0 + off_x
-                        text_y = y0 + off_y + fontsize  # baseline is at bottom of text
-                        text_point = fitz.Point(text_x, text_y)
-                        tw.append(text_point, text, font=template_font, fontsize=fontsize)
-                        tw.write_text(template_page, color=template_color)
+                # Preserve original metadata
+                original_tpl_metadata = template_doc.metadata.copy() if template_doc.metadata else {}
+
+                # Collect text items
+                tpl_text_items = []
                 
-                # Add all 6 text areas with appropriate font sizes and offsets
-                add_template_text(tpl_up_number, tpl_un_x0, tpl_un_y0, tpl_un_x1, tpl_un_y1, tpl_un_off_x, tpl_un_off_y, number_fontsize)
-                add_template_text(tpl_down_number, tpl_dn_x0, tpl_dn_y0, tpl_dn_x1, tpl_dn_y1, tpl_dn_off_x, tpl_dn_off_y, number_fontsize)
-                add_template_text(tpl_upleft_date, tpl_ul_x0, tpl_ul_y0, tpl_ul_x1, tpl_ul_y1, tpl_ul_off_x, tpl_ul_off_y, date_fontsize)
-                add_template_text(tpl_upright_date, tpl_ur_x0, tpl_ur_y0, tpl_ur_x1, tpl_ur_y1, tpl_ur_off_x, tpl_ur_off_y, date_fontsize)
-                add_template_text(tpl_downleft_date, tpl_dl_x0, tpl_dl_y0, tpl_dl_x1, tpl_dl_y1, tpl_dl_off_x, tpl_dl_off_y, date_fontsize)
-                add_template_text(tpl_downright_date, tpl_dr_x0, tpl_dr_y0, tpl_dr_x1, tpl_dr_y1, tpl_dr_off_x, tpl_dr_off_y, date_fontsize)
+                def queue_template_text(text, x0, y0, x1, y1, off_x, off_y, fontsize):
+                    if text.strip():
+                        # Draw white rectangle to cover original content
+                        rect = fitz.Rect(x0, y0, x1, y1)
+                        template_page.draw_rect(rect, color=None, fill=(1, 1, 1))
+                        text_x = x0 + off_x
+                        text_y = y0 + off_y + fontsize
+                        tpl_text_items.append((text, text_x, text_y, fontsize))
+                
+                # Queue all 6 text areas
+                queue_template_text(tpl_up_number, tpl_un_x0, tpl_un_y0, tpl_un_x1, tpl_un_y1, tpl_un_off_x, tpl_un_off_y, number_fontsize)
+                queue_template_text(tpl_down_number, tpl_dn_x0, tpl_dn_y0, tpl_dn_x1, tpl_dn_y1, tpl_dn_off_x, tpl_dn_off_y, number_fontsize)
+                queue_template_text(tpl_upleft_date, tpl_ul_x0, tpl_ul_y0, tpl_ul_x1, tpl_ul_y1, tpl_ul_off_x, tpl_ul_off_y, date_fontsize)
+                queue_template_text(tpl_upright_date, tpl_ur_x0, tpl_ur_y0, tpl_ur_x1, tpl_ur_y1, tpl_ur_off_x, tpl_ur_off_y, date_fontsize)
+                queue_template_text(tpl_downleft_date, tpl_dl_x0, tpl_dl_y0, tpl_dl_x1, tpl_dl_y1, tpl_dl_off_x, tpl_dl_off_y, date_fontsize)
+                queue_template_text(tpl_downright_date, tpl_dr_x0, tpl_dr_y0, tpl_dr_x1, tpl_dr_y1, tpl_dr_off_x, tpl_dr_off_y, date_fontsize)
+
+                # Add replacement text using TextWriter
+                for text, tx, ty, fs in tpl_text_items:
+                    tw = fitz.TextWriter(template_page.rect)
+                    tw.append(fitz.Point(tx, ty), text, font=template_font, fontsize=fs)
+                    tw.write_text(template_page, color=template_color)
+
+                # Flatten entire page to a single image
+                flatten_page_to_image(template_doc, page_index=0)
+
+                # Restore original metadata
+                template_doc.set_metadata(original_tpl_metadata)
             
-            # Save template to buffer with compression
+            # Save template to buffer with full cleanup
             template_buffer = io.BytesIO()
-            template_doc.save(template_buffer, garbage=4, deflate=True)
+            template_doc.save(template_buffer, garbage=4, deflate=True, clean=True)
             template_buffer.seek(0)
             
             return send_file(
@@ -572,9 +627,9 @@ def index():
                 mimetype='application/pdf'
             )
 
-        # Save to buffer with compression
+        # Save to buffer with full cleanup
         output_buffer = io.BytesIO()
-        pdf_document.save(output_buffer, garbage=4, deflate=True)
+        pdf_document.save(output_buffer, garbage=4, deflate=True, clean=True)
         output_buffer.seek(0)
         
         return send_file(
