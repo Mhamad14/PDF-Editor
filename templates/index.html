@@ -1853,204 +1853,196 @@
             formData.set('action', 'download');
             formData.set('desired_filename', currentNum + '.pdf'); // Set desired filename for backend
 
-            // Submit form via hidden iframe to get native download behavior (fixes iOS Firefox)
+            // Submit form via fetch to get the PDF
             try {
-                // Create a hidden iframe
-                const iframeName = 'download_iframe_' + Date.now();
-                const iframe = document.createElement('iframe');
-                iframe.name = iframeName;
-                iframe.style.display = 'none';
-                document.body.appendChild(iframe);
-
-                // Create a hidden form pointing to the iframe
-                const dForm = document.createElement('form');
-                dForm.target = iframeName;
-                dForm.method = 'POST';
-                dForm.action = '/';
-                dForm.style.display = 'none';
-
-                // Add all formData entries to the hidden form
-                for (const [key, value] of formData.entries()) {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = key;
-                    if (value instanceof File) {
-                        // For files, we need to append the original file input to this new form temporarily
-                        // Since this gets complicated, we'll clone the whole original form instead
-                        continue;
-                    }
-                    input.value = value;
-                    dForm.appendChild(input);
-                }
-
-                // If there's a file, we need to handle it differently
-                // The easiest way for a file form is to temporarily change the target of the original form
-                const originalTarget = form.target;
-                const originalAction = form.action;
-
-                // Add desired_filename to original form temporarily
-                const desiredFilenameInput = document.createElement('input');
-                desiredFilenameInput.type = 'hidden';
-                desiredFilenameInput.name = 'desired_filename';
-                desiredFilenameInput.value = currentNum + '.pdf';
-                form.appendChild(desiredFilenameInput);
-
-                // Also add the action=download input if it doesn't exist
-                let actionInput = form.querySelector('input[name="action"]');
-                if (!actionInput) {
-                    actionInput = document.createElement('input');
-                    actionInput.type = 'hidden';
-                    actionInput.name = 'action';
-                    form.appendChild(actionInput);
-                }
-                const originalActionValue = actionInput.value;
-                actionInput.value = 'download';
-
-                form.target = iframeName;
-                form.action = '/';
-                form.submit();
-
-                // Restore original form state after a short delay
-                setTimeout(() => {
-                    form.target = originalTarget;
-                    form.action = originalAction;
-                    if (actionInput) actionInput.value = originalActionValue;
-                    if (desiredFilenameInput) desiredFilenameInput.remove();
-                    // Clean up iframe after a longer delay (when download is likely started)
-                    setTimeout(() => iframe.remove(), 5000);
-                }, 100);
-
-                // Auto-increment the file number
-                const mainNumericPart = parseInt(currentNum, 10);
-                if (!isNaN(mainNumericPart)) {
-                    const nextNum = mainNumericPart + 1;
-                    // Always use at least 3 digits, or more if original was longer
-                    const padLength = Math.max(3, currentNum.length);
-                    const paddedNum = String(nextNum).padStart(padLength, '0');
-                    fileNumberInput.value = paddedNum;
-                    localStorage.setItem('pdf_editor_file_number', paddedNum);
-                }
-
-                // Check if plate number is filled - download template PDF
-                const plateNumber = document.getElementById('plate_number').value;
-                const leftDate = document.getElementById('tpl_left_date')?.value || '';
-                const rightDate = document.getElementById('tpl_right_date')?.value || '';
-
-                if (plateNumber.trim()) {
-                    // Get selected template type from Main PDF tab
-                    const templateType = document.querySelector('input[name="main_template_type"]:checked')?.value || 'big';
-                    const prefix = 'pdf_editor_' + templateType + '_';
-
-                    // Hardcoded defaults for each template type
-                    const mainDefaults = {
-                        big: {
-                            tpl2_un_x0: 57, tpl2_un_y0: 31, tpl2_un_x1: 804, tpl2_un_y1: 203, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
-                            tpl2_dn_x0: 57, tpl2_dn_y0: 321, tpl2_dn_x1: 804, tpl2_dn_y1: 481, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
-                            tpl2_ul_x0: 72, tpl2_ul_y0: 225, tpl2_ul_x1: 176, tpl2_ul_y1: 259, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
-                            tpl2_ur_x0: 666, tpl2_ur_y0: 225, tpl2_ur_x1: 777, tpl2_ur_y1: 259, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
-                            tpl2_dl_x0: 72, tpl2_dl_y0: 514, tpl2_dl_x1: 176, tpl2_dl_y1: 545, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
-                            tpl2_dr_x0: 666, tpl2_dr_y0: 513, tpl2_dr_x1: 777, tpl2_dr_y1: 550, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
-                            tpl2_number_fontsize: 188, tpl2_date_fontsize: 31
-                        },
-                        small: {
-                            tpl2_un_x0: 43, tpl2_un_y0: 115, tpl2_un_x1: 529, tpl2_un_y1: 219, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
-                            tpl2_ul_x0: 46, tpl2_ul_y0: 281, tpl2_ul_x1: 151, tpl2_ul_y1: 309, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
-                            tpl2_ur_x0: 431, tpl2_ur_y0: 276, tpl2_ur_x1: 538, tpl2_ur_y1: 309, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
-                            tpl2_dn_x0: 0, tpl2_dn_y0: 0, tpl2_dn_x1: 0, tpl2_dn_y1: 0, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
-                            tpl2_dl_x0: 0, tpl2_dl_y0: 0, tpl2_dl_x1: 0, tpl2_dl_y1: 0, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
-                            tpl2_dr_x0: 0, tpl2_dr_y0: 0, tpl2_dr_x1: 0, tpl2_dr_y1: 0, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
-                            tpl2_number_fontsize: 121, tpl2_date_fontsize: 31
-                        }
-                    };
-                    const defaults = mainDefaults[templateType];
-
-                    // Get coordinates and fonts - ONLY use localStorage then defaults
-                    // Do NOT use UI values as they may be from a different template type
-                    const getCoord = (id) => {
-                        const saved = localStorage.getItem(prefix + id);
-                        return saved !== null ? saved : (defaults[id] !== undefined ? defaults[id] : 0);
-                    };
-
-                    // Build form data for template generation
-                    const templateFormData = new FormData();
-                    templateFormData.append('template_type', templateType);
-                    templateFormData.append('plate_number', plateNumber);
-                    templateFormData.append('left_date', leftDate);
-                    templateFormData.append('right_date', rightDate);
-
-                    // Font sizes
-                    templateFormData.append('number_fontsize', getCoord('tpl2_number_fontsize'));
-                    templateFormData.append('date_fontsize', getCoord('tpl2_date_fontsize'));
-
-                    // Coordinates for each area
-                    ['un', 'dn', 'ul', 'ur', 'dl', 'dr'].forEach(area => {
-                        ['x0', 'y0', 'x1', 'y1', 'off_x', 'off_y'].forEach(coord => {
-                            templateFormData.append(`${area}_${coord}`, getCoord(`tpl2_${area}_${coord}`));
-                        });
-                    });
-
-                    // Generate template PDF filename (strip leading zeros)
-                    const templateFileName = parseInt(currentNum, 10) + '.pdf';
-                    templateFormData.append('desired_filename', templateFileName);
-
-                    try {
-                        // Use hidden iframe approach for the template download too
-                        const tIframeName = 'tpl_download_iframe_' + Date.now();
-                        const tIframe = document.createElement('iframe');
-                        tIframe.name = tIframeName;
-                        tIframe.style.display = 'none';
-                        document.body.appendChild(tIframe);
-
-                        const tForm = document.createElement('form');
-                        tForm.target = tIframeName;
-                        tForm.method = 'POST';
-                        tForm.action = '/generate_template';
-                        tForm.style.display = 'none';
-
-                        for (const [key, value] of templateFormData.entries()) {
-                            const input = document.createElement('input');
-                            input.type = 'hidden';
-                            input.name = key;
-                            input.value = value;
-                            tForm.appendChild(input);
-                        }
-
-                        document.body.appendChild(tForm);
-                        tForm.submit();
-
-                        setTimeout(() => {
-                            tForm.remove();
-                            setTimeout(() => tIframe.remove(), 5000);
-                        }, 1000);
-                    } catch (tplError) {
-                        console.error('Template PDF error:', tplError);
-                    }
-                }
-
-                // Reset vehicle fields after successful download (keep dates)
-                const fieldsToReset = [
-                    'top_name',     // Top Name
-                    'marke',        // Mærke
-                    'model',        // Model
-                    'stealnumber',  // Stelnr
-                    'art',          // Art
-                    'plate_number', // Plate Number
-                    'forste_gang'   // Første gang
-                ];
-                fieldsToReset.forEach(fieldId => {
-                    const field = document.getElementById(fieldId);
-                    if (field) {
-                        field.value = '';
-                        // Clear error styles if any
-                        if (fieldId === 'plate_number') {
-                            field.style.borderColor = '';
-                            const warningEl = document.getElementById('plate-warning');
-                            if (warningEl) warningEl.style.display = 'none';
-                        }
-                    }
+                const response = await fetch('/', {
+                    method: 'POST',
+                    body: formData
                 });
 
-                // We already set fileNumberInput.value and localStorage above, so we are good.
+                if (response.ok) {
+                    // Try to get filename from Content-Disposition header
+                    let filename = currentNum + '.pdf';
+                    const disposition = response.headers.get('Content-Disposition');
+                    if (disposition && disposition.indexOf('attachment') !== -1) {
+                        const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                        const matches = filenameRegex.exec(disposition);
+                        if (matches != null && matches[1]) {
+                            filename = matches[1].replace(/['"]/g, '');
+                        }
+                    }
+
+                    // Download the file using Blob
+                    const blob = await response.blob();
+
+                    // Explicitly create a new Blob with the correct MIME type (helps iOS)
+                    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+
+                    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                        window.navigator.msSaveOrOpenBlob(pdfBlob, filename);
+                    } else {
+                        const url = window.URL.createObjectURL(pdfBlob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = url;
+                        // For iOS, setting download attribute along with correct MIME type and target
+                        a.download = filename;
+                        a.target = '_blank';
+                        document.body.appendChild(a);
+                        a.click();
+
+                        setTimeout(() => {
+                            window.URL.revokeObjectURL(url);
+                            a.remove();
+                        }, 1000);
+                    }
+
+                    // Auto-increment the file number
+                    const mainNumericPart = parseInt(currentNum, 10);
+                    if (!isNaN(mainNumericPart)) {
+                        const nextNum = mainNumericPart + 1;
+                        // Always use at least 3 digits, or more if original was longer
+                        const padLength = Math.max(3, currentNum.length);
+                        const paddedNum = String(nextNum).padStart(padLength, '0');
+                        fileNumberInput.value = paddedNum;
+                        localStorage.setItem('pdf_editor_file_number', paddedNum);
+                    }
+
+                    // Check if plate number is filled - download template PDF
+                    const plateNumber = document.getElementById('plate_number').value;
+                    const leftDate = document.getElementById('tpl_left_date')?.value || '';
+                    const rightDate = document.getElementById('tpl_right_date')?.value || '';
+
+                    if (plateNumber.trim()) {
+                        // Get selected template type from Main PDF tab
+                        const templateType = document.querySelector('input[name="main_template_type"]:checked')?.value || 'big';
+                        const prefix = 'pdf_editor_' + templateType + '_';
+
+                        // Hardcoded defaults for each template type
+                        const mainDefaults = {
+                            big: {
+                                tpl2_un_x0: 57, tpl2_un_y0: 31, tpl2_un_x1: 804, tpl2_un_y1: 203, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
+                                tpl2_dn_x0: 57, tpl2_dn_y0: 321, tpl2_dn_x1: 804, tpl2_dn_y1: 481, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
+                                tpl2_ul_x0: 72, tpl2_ul_y0: 225, tpl2_ul_x1: 176, tpl2_ul_y1: 259, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
+                                tpl2_ur_x0: 666, tpl2_ur_y0: 225, tpl2_ur_x1: 777, tpl2_ur_y1: 259, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
+                                tpl2_dl_x0: 72, tpl2_dl_y0: 514, tpl2_dl_x1: 176, tpl2_dl_y1: 545, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
+                                tpl2_dr_x0: 666, tpl2_dr_y0: 513, tpl2_dr_x1: 777, tpl2_dr_y1: 550, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
+                                tpl2_number_fontsize: 188, tpl2_date_fontsize: 31
+                            },
+                            small: {
+                                tpl2_un_x0: 43, tpl2_un_y0: 115, tpl2_un_x1: 529, tpl2_un_y1: 219, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
+                                tpl2_ul_x0: 46, tpl2_ul_y0: 281, tpl2_ul_x1: 151, tpl2_ul_y1: 309, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
+                                tpl2_ur_x0: 431, tpl2_ur_y0: 276, tpl2_ur_x1: 538, tpl2_ur_y1: 309, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
+                                tpl2_dn_x0: 0, tpl2_dn_y0: 0, tpl2_dn_x1: 0, tpl2_dn_y1: 0, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
+                                tpl2_dl_x0: 0, tpl2_dl_y0: 0, tpl2_dl_x1: 0, tpl2_dl_y1: 0, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
+                                tpl2_dr_x0: 0, tpl2_dr_y0: 0, tpl2_dr_x1: 0, tpl2_dr_y1: 0, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
+                                tpl2_number_fontsize: 121, tpl2_date_fontsize: 31
+                            }
+                        };
+                        const defaults = mainDefaults[templateType];
+
+                        // Get coordinates and fonts - ONLY use localStorage then defaults
+                        // Do NOT use UI values as they may be from a different template type
+                        const getCoord = (id) => {
+                            const saved = localStorage.getItem(prefix + id);
+                            return saved !== null ? saved : (defaults[id] !== undefined ? defaults[id] : 0);
+                        };
+
+                        // Build form data for template generation
+                        const templateFormData = new FormData();
+                        templateFormData.append('template_type', templateType);
+                        templateFormData.append('plate_number', plateNumber);
+                        templateFormData.append('left_date', leftDate);
+                        templateFormData.append('right_date', rightDate);
+
+                        // Font sizes
+                        templateFormData.append('number_fontsize', getCoord('tpl2_number_fontsize'));
+                        templateFormData.append('date_fontsize', getCoord('tpl2_date_fontsize'));
+
+                        // Coordinates for each area
+                        ['un', 'dn', 'ul', 'ur', 'dl', 'dr'].forEach(area => {
+                            ['x0', 'y0', 'x1', 'y1', 'off_x', 'off_y'].forEach(coord => {
+                                templateFormData.append(`${area}_${coord}`, getCoord(`tpl2_${area}_${coord}`));
+                            });
+                        });
+
+                        // Generate template PDF filename (strip leading zeros)
+                        const templateFileName = parseInt(currentNum, 10) + '.pdf';
+                        templateFormData.append('desired_filename', templateFileName);
+
+                        try {
+                            const templateResponse = await fetch('/generate_template', {
+                                method: 'POST',
+                                body: templateFormData
+                            });
+
+                            if (templateResponse.ok) {
+                                let tFilename = templateFileName;
+                                const tDisposition = templateResponse.headers.get('Content-Disposition');
+                                if (tDisposition && tDisposition.indexOf('attachment') !== -1) {
+                                    const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                                    const matches = filenameRegex.exec(tDisposition);
+                                    if (matches != null && matches[1]) {
+                                        tFilename = matches[1].replace(/['"]/g, '');
+                                    }
+                                }
+
+                                const templateBlob = await templateResponse.blob();
+                                const tPdfBlob = new Blob([templateBlob], { type: 'application/pdf' });
+
+                                if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                                    window.navigator.msSaveOrOpenBlob(tPdfBlob, tFilename);
+                                } else {
+                                    const templateUrl = window.URL.createObjectURL(tPdfBlob);
+                                    const templateA = document.createElement('a');
+                                    templateA.style.display = 'none';
+                                    templateA.href = templateUrl;
+                                    templateA.download = tFilename;
+                                    templateA.target = '_blank';
+                                    document.body.appendChild(templateA);
+
+                                    // Delay the template download slightly to ensure main PDF download starts first
+                                    setTimeout(() => {
+                                        templateA.click();
+                                        setTimeout(() => {
+                                            window.URL.revokeObjectURL(templateUrl);
+                                            templateA.remove();
+                                        }, 1000);
+                                    }, 500);
+                                }
+                            }
+                        } catch (tplError) {
+                            console.error('Template PDF error:', tplError);
+                        }
+                    }
+
+                    // Reset vehicle fields after successful download (keep dates)
+                    const fieldsToReset = [
+                        'top_name',     // Top Name
+                        'marke',        // Mærke
+                        'model',        // Model
+                        'stealnumber',  // Stelnr
+                        'art',          // Art
+                        'plate_number', // Plate Number
+                        'forste_gang'   // Første gang
+                    ];
+                    fieldsToReset.forEach(fieldId => {
+                        const field = document.getElementById(fieldId);
+                        if (field) {
+                            field.value = '';
+                            // Clear error styles if any
+                            if (fieldId === 'plate_number') {
+                                field.style.borderColor = '';
+                                const warningEl = document.getElementById('plate-warning');
+                                if (warningEl) warningEl.style.display = 'none';
+                            }
+                        }
+                    });
+
+                    // We already set fileNumberInput.value and localStorage above, so we are good.
+                } else {
+                    alert('Error downloading PDF');
+                }
             } catch (error) {
                 console.error('Error:', error);
                 alert('An error occurred. check console.');
@@ -2760,34 +2752,46 @@
 
                 try {
                     const fileNum = document.getElementById('file_number')?.value || '01';
-                    const desiredFilename = parseInt(fileNum, 10) + '.pdf';
+                    let desiredFilename = parseInt(fileNum, 10) + '.pdf';
 
-                    // Create hidden iframe
-                    const iframeName = 'download_template_iframe_' + Date.now();
-                    const iframe = document.createElement('iframe');
-                    iframe.name = iframeName;
-                    iframe.style.display = 'none';
-                    document.body.appendChild(iframe);
+                    const formData = new FormData(form);
+                    formData.append('desired_filename', desiredFilename);
 
-                    // Temporarily modify form
-                    const originalTarget = form.target;
+                    const response = await fetch('/', { method: 'POST', body: formData });
 
-                    // Add desired_filename
-                    const filenameInput = document.createElement('input');
-                    filenameInput.type = 'hidden';
-                    filenameInput.name = 'desired_filename';
-                    filenameInput.value = desiredFilename;
-                    form.appendChild(filenameInput);
+                    if (response.ok) {
+                        const disposition = response.headers.get('Content-Disposition');
+                        if (disposition && disposition.indexOf('attachment') !== -1) {
+                            const filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
+                            const matches = filenameRegex.exec(disposition);
+                            if (matches != null && matches[1]) {
+                                desiredFilename = matches[1].replace(/['"]/g, '');
+                            }
+                        }
 
-                    form.target = iframeName;
-                    form.submit();
+                        const blob = await response.blob();
+                        const pdfBlob = new Blob([blob], { type: 'application/pdf' });
 
-                    // Restore
-                    setTimeout(() => {
-                        form.target = originalTarget;
-                        filenameInput.remove();
-                        setTimeout(() => iframe.remove(), 5000);
-                    }, 100);
+                        if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                            window.navigator.msSaveOrOpenBlob(pdfBlob, desiredFilename);
+                        } else {
+                            const url = window.URL.createObjectURL(pdfBlob);
+                            const a = document.createElement('a');
+                            a.style.display = 'none';
+                            a.href = url;
+                            a.download = desiredFilename;
+                            a.target = '_blank';
+                            document.body.appendChild(a);
+                            a.click();
+
+                            setTimeout(() => {
+                                window.URL.revokeObjectURL(url);
+                                a.remove();
+                            }, 1000);
+                        }
+                    } else {
+                        alert('Error downloading template PDF');
+                    }
                 } catch (e) {
                     console.error('Download error:', e);
                     alert('Error: ' + e.message);
