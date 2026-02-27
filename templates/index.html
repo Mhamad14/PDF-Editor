@@ -1851,148 +1851,206 @@
             // Create form data and add action
             const formData = new FormData(form);
             formData.set('action', 'download');
+            formData.set('desired_filename', currentNum + '.pdf'); // Set desired filename for backend
 
-            // Submit form via fetch to get the PDF
+            // Submit form via hidden iframe to get native download behavior (fixes iOS Firefox)
             try {
-                const response = await fetch('/', {
-                    method: 'POST',
-                    body: formData
-                });
+                // Create a hidden iframe
+                const iframeName = 'download_iframe_' + Date.now();
+                const iframe = document.createElement('iframe');
+                iframe.name = iframeName;
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
 
-                if (response.ok) {
-                    // Download the file
-                    const blob = await response.blob();
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = currentNum + '.pdf';
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    a.remove();
+                // Create a hidden form pointing to the iframe
+                const dForm = document.createElement('form');
+                dForm.target = iframeName;
+                dForm.method = 'POST';
+                dForm.action = '/';
+                dForm.style.display = 'none';
 
-                    // Auto-increment the file number
-                    const mainNumericPart = parseInt(currentNum, 10);
-                    if (!isNaN(mainNumericPart)) {
-                        const nextNum = mainNumericPart + 1;
-                        // Always use at least 3 digits, or more if original was longer
-                        const padLength = Math.max(3, currentNum.length);
-                        const paddedNum = String(nextNum).padStart(padLength, '0');
-                        fileNumberInput.value = paddedNum;
-                        localStorage.setItem('pdf_editor_file_number', paddedNum);
+                // Add all formData entries to the hidden form
+                for (const [key, value] of formData.entries()) {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = key;
+                    if (value instanceof File) {
+                        // For files, we need to append the original file input to this new form temporarily
+                        // Since this gets complicated, we'll clone the whole original form instead
+                        continue;
                     }
+                    input.value = value;
+                    dForm.appendChild(input);
+                }
 
-                    // Check if plate number is filled - download template PDF
-                    const plateNumber = document.getElementById('plate_number').value;
-                    const leftDate = document.getElementById('tpl_left_date')?.value || '';
-                    const rightDate = document.getElementById('tpl_right_date')?.value || '';
+                // If there's a file, we need to handle it differently
+                // The easiest way for a file form is to temporarily change the target of the original form
+                const originalTarget = form.target;
+                const originalAction = form.action;
 
-                    if (plateNumber.trim()) {
-                        // Get selected template type from Main PDF tab
-                        const templateType = document.querySelector('input[name="main_template_type"]:checked')?.value || 'big';
-                        const prefix = 'pdf_editor_' + templateType + '_';
+                // Add desired_filename to original form temporarily
+                const desiredFilenameInput = document.createElement('input');
+                desiredFilenameInput.type = 'hidden';
+                desiredFilenameInput.name = 'desired_filename';
+                desiredFilenameInput.value = currentNum + '.pdf';
+                form.appendChild(desiredFilenameInput);
 
-                        // Hardcoded defaults for each template type
-                        const mainDefaults = {
-                            big: {
-                                tpl2_un_x0: 57, tpl2_un_y0: 31, tpl2_un_x1: 804, tpl2_un_y1: 203, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
-                                tpl2_dn_x0: 57, tpl2_dn_y0: 321, tpl2_dn_x1: 804, tpl2_dn_y1: 481, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
-                                tpl2_ul_x0: 72, tpl2_ul_y0: 225, tpl2_ul_x1: 176, tpl2_ul_y1: 259, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
-                                tpl2_ur_x0: 666, tpl2_ur_y0: 225, tpl2_ur_x1: 777, tpl2_ur_y1: 259, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
-                                tpl2_dl_x0: 72, tpl2_dl_y0: 514, tpl2_dl_x1: 176, tpl2_dl_y1: 545, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
-                                tpl2_dr_x0: 666, tpl2_dr_y0: 513, tpl2_dr_x1: 777, tpl2_dr_y1: 550, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
-                                tpl2_number_fontsize: 188, tpl2_date_fontsize: 31
-                            },
-                            small: {
-                                tpl2_un_x0: 43, tpl2_un_y0: 115, tpl2_un_x1: 529, tpl2_un_y1: 219, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
-                                tpl2_ul_x0: 46, tpl2_ul_y0: 281, tpl2_ul_x1: 151, tpl2_ul_y1: 309, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
-                                tpl2_ur_x0: 431, tpl2_ur_y0: 276, tpl2_ur_x1: 538, tpl2_ur_y1: 309, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
-                                tpl2_dn_x0: 0, tpl2_dn_y0: 0, tpl2_dn_x1: 0, tpl2_dn_y1: 0, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
-                                tpl2_dl_x0: 0, tpl2_dl_y0: 0, tpl2_dl_x1: 0, tpl2_dl_y1: 0, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
-                                tpl2_dr_x0: 0, tpl2_dr_y0: 0, tpl2_dr_x1: 0, tpl2_dr_y1: 0, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
-                                tpl2_number_fontsize: 121, tpl2_date_fontsize: 31
-                            }
-                        };
-                        const defaults = mainDefaults[templateType];
+                // Also add the action=download input if it doesn't exist
+                let actionInput = form.querySelector('input[name="action"]');
+                if (!actionInput) {
+                    actionInput = document.createElement('input');
+                    actionInput.type = 'hidden';
+                    actionInput.name = 'action';
+                    form.appendChild(actionInput);
+                }
+                const originalActionValue = actionInput.value;
+                actionInput.value = 'download';
 
-                        // Get coordinates and fonts - ONLY use localStorage then defaults
-                        // Do NOT use UI values as they may be from a different template type
-                        const getCoord = (id) => {
-                            const saved = localStorage.getItem(prefix + id);
-                            return saved !== null ? saved : (defaults[id] !== undefined ? defaults[id] : 0);
-                        };
+                form.target = iframeName;
+                form.action = '/';
+                form.submit();
 
-                        // Build form data for template generation
-                        const templateFormData = new FormData();
-                        templateFormData.append('template_type', templateType);
-                        templateFormData.append('plate_number', plateNumber);
-                        templateFormData.append('left_date', leftDate);
-                        templateFormData.append('right_date', rightDate);
+                // Restore original form state after a short delay
+                setTimeout(() => {
+                    form.target = originalTarget;
+                    form.action = originalAction;
+                    if (actionInput) actionInput.value = originalActionValue;
+                    if (desiredFilenameInput) desiredFilenameInput.remove();
+                    // Clean up iframe after a longer delay (when download is likely started)
+                    setTimeout(() => iframe.remove(), 5000);
+                }, 100);
 
-                        // Font sizes
-                        templateFormData.append('number_fontsize', getCoord('tpl2_number_fontsize'));
-                        templateFormData.append('date_fontsize', getCoord('tpl2_date_fontsize'));
+                // Auto-increment the file number
+                const mainNumericPart = parseInt(currentNum, 10);
+                if (!isNaN(mainNumericPart)) {
+                    const nextNum = mainNumericPart + 1;
+                    // Always use at least 3 digits, or more if original was longer
+                    const padLength = Math.max(3, currentNum.length);
+                    const paddedNum = String(nextNum).padStart(padLength, '0');
+                    fileNumberInput.value = paddedNum;
+                    localStorage.setItem('pdf_editor_file_number', paddedNum);
+                }
 
-                        // Coordinates for each area
-                        ['un', 'dn', 'ul', 'ur', 'dl', 'dr'].forEach(area => {
-                            ['x0', 'y0', 'x1', 'y1', 'off_x', 'off_y'].forEach(coord => {
-                                templateFormData.append(`${area}_${coord}`, getCoord(`tpl2_${area}_${coord}`));
-                            });
+                // Check if plate number is filled - download template PDF
+                const plateNumber = document.getElementById('plate_number').value;
+                const leftDate = document.getElementById('tpl_left_date')?.value || '';
+                const rightDate = document.getElementById('tpl_right_date')?.value || '';
+
+                if (plateNumber.trim()) {
+                    // Get selected template type from Main PDF tab
+                    const templateType = document.querySelector('input[name="main_template_type"]:checked')?.value || 'big';
+                    const prefix = 'pdf_editor_' + templateType + '_';
+
+                    // Hardcoded defaults for each template type
+                    const mainDefaults = {
+                        big: {
+                            tpl2_un_x0: 57, tpl2_un_y0: 31, tpl2_un_x1: 804, tpl2_un_y1: 203, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
+                            tpl2_dn_x0: 57, tpl2_dn_y0: 321, tpl2_dn_x1: 804, tpl2_dn_y1: 481, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
+                            tpl2_ul_x0: 72, tpl2_ul_y0: 225, tpl2_ul_x1: 176, tpl2_ul_y1: 259, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
+                            tpl2_ur_x0: 666, tpl2_ur_y0: 225, tpl2_ur_x1: 777, tpl2_ur_y1: 259, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
+                            tpl2_dl_x0: 72, tpl2_dl_y0: 514, tpl2_dl_x1: 176, tpl2_dl_y1: 545, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
+                            tpl2_dr_x0: 666, tpl2_dr_y0: 513, tpl2_dr_x1: 777, tpl2_dr_y1: 550, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
+                            tpl2_number_fontsize: 188, tpl2_date_fontsize: 31
+                        },
+                        small: {
+                            tpl2_un_x0: 43, tpl2_un_y0: 115, tpl2_un_x1: 529, tpl2_un_y1: 219, tpl2_un_off_x: 0, tpl2_un_off_y: 0,
+                            tpl2_ul_x0: 46, tpl2_ul_y0: 281, tpl2_ul_x1: 151, tpl2_ul_y1: 309, tpl2_ul_off_x: 0, tpl2_ul_off_y: 0,
+                            tpl2_ur_x0: 431, tpl2_ur_y0: 276, tpl2_ur_x1: 538, tpl2_ur_y1: 309, tpl2_ur_off_x: 0, tpl2_ur_off_y: 0,
+                            tpl2_dn_x0: 0, tpl2_dn_y0: 0, tpl2_dn_x1: 0, tpl2_dn_y1: 0, tpl2_dn_off_x: 0, tpl2_dn_off_y: 0,
+                            tpl2_dl_x0: 0, tpl2_dl_y0: 0, tpl2_dl_x1: 0, tpl2_dl_y1: 0, tpl2_dl_off_x: 0, tpl2_dl_off_y: 0,
+                            tpl2_dr_x0: 0, tpl2_dr_y0: 0, tpl2_dr_x1: 0, tpl2_dr_y1: 0, tpl2_dr_off_x: 0, tpl2_dr_off_y: 0,
+                            tpl2_number_fontsize: 121, tpl2_date_fontsize: 31
+                        }
+                    };
+                    const defaults = mainDefaults[templateType];
+
+                    // Get coordinates and fonts - ONLY use localStorage then defaults
+                    // Do NOT use UI values as they may be from a different template type
+                    const getCoord = (id) => {
+                        const saved = localStorage.getItem(prefix + id);
+                        return saved !== null ? saved : (defaults[id] !== undefined ? defaults[id] : 0);
+                    };
+
+                    // Build form data for template generation
+                    const templateFormData = new FormData();
+                    templateFormData.append('template_type', templateType);
+                    templateFormData.append('plate_number', plateNumber);
+                    templateFormData.append('left_date', leftDate);
+                    templateFormData.append('right_date', rightDate);
+
+                    // Font sizes
+                    templateFormData.append('number_fontsize', getCoord('tpl2_number_fontsize'));
+                    templateFormData.append('date_fontsize', getCoord('tpl2_date_fontsize'));
+
+                    // Coordinates for each area
+                    ['un', 'dn', 'ul', 'ur', 'dl', 'dr'].forEach(area => {
+                        ['x0', 'y0', 'x1', 'y1', 'off_x', 'off_y'].forEach(coord => {
+                            templateFormData.append(`${area}_${coord}`, getCoord(`tpl2_${area}_${coord}`));
                         });
-
-                        // Generate template PDF filename (strip leading zeros)
-                        const templateFileName = parseInt(currentNum, 10) + '.pdf';
-
-                        try {
-                            const templateResponse = await fetch('/generate_template', {
-                                method: 'POST',
-                                body: templateFormData
-                            });
-
-                            if (templateResponse.ok) {
-                                const templateBlob = await templateResponse.blob();
-                                const templateUrl = window.URL.createObjectURL(templateBlob);
-                                const templateA = document.createElement('a');
-                                templateA.href = templateUrl;
-                                templateA.download = templateFileName;
-                                document.body.appendChild(templateA);
-                                templateA.click();
-                                window.URL.revokeObjectURL(templateUrl);
-                                templateA.remove();
-                            }
-                        } catch (tplError) {
-                            console.error('Template PDF error:', tplError);
-                        }
-                    }
-
-                    // Reset vehicle fields after successful download (keep dates)
-                    const fieldsToReset = [
-                        'top_name',     // Top Name
-                        'marke',        // Mærke
-                        'model',        // Model
-                        'stealnumber',  // Stelnr
-                        'art',          // Art
-                        'plate_number', // Plate Number
-                        'forste_gang'   // Første gang
-                    ];
-                    fieldsToReset.forEach(fieldId => {
-                        const field = document.getElementById(fieldId);
-                        if (field) {
-                            field.value = '';
-                            // Clear error styles if any
-                            if (fieldId === 'plate_number') {
-                                field.style.borderColor = '';
-                                const warningEl = document.getElementById('plate-warning');
-                                if (warningEl) warningEl.style.display = 'none';
-                            }
-                        }
                     });
 
-                    // Increment file number again if needed (or just use the one we set above)
-                    // We already set fileNumberInput.value and localStorage above, so we are good.
-                } else {
-                    alert('Error downloading PDF');
+                    // Generate template PDF filename (strip leading zeros)
+                    const templateFileName = parseInt(currentNum, 10) + '.pdf';
+                    templateFormData.append('desired_filename', templateFileName);
+
+                    try {
+                        // Use hidden iframe approach for the template download too
+                        const tIframeName = 'tpl_download_iframe_' + Date.now();
+                        const tIframe = document.createElement('iframe');
+                        tIframe.name = tIframeName;
+                        tIframe.style.display = 'none';
+                        document.body.appendChild(tIframe);
+
+                        const tForm = document.createElement('form');
+                        tForm.target = tIframeName;
+                        tForm.method = 'POST';
+                        tForm.action = '/generate_template';
+                        tForm.style.display = 'none';
+
+                        for (const [key, value] of templateFormData.entries()) {
+                            const input = document.createElement('input');
+                            input.type = 'hidden';
+                            input.name = key;
+                            input.value = value;
+                            tForm.appendChild(input);
+                        }
+
+                        document.body.appendChild(tForm);
+                        tForm.submit();
+
+                        setTimeout(() => {
+                            tForm.remove();
+                            setTimeout(() => tIframe.remove(), 5000);
+                        }, 1000);
+                    } catch (tplError) {
+                        console.error('Template PDF error:', tplError);
+                    }
                 }
+
+                // Reset vehicle fields after successful download (keep dates)
+                const fieldsToReset = [
+                    'top_name',     // Top Name
+                    'marke',        // Mærke
+                    'model',        // Model
+                    'stealnumber',  // Stelnr
+                    'art',          // Art
+                    'plate_number', // Plate Number
+                    'forste_gang'   // Første gang
+                ];
+                fieldsToReset.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (field) {
+                        field.value = '';
+                        // Clear error styles if any
+                        if (fieldId === 'plate_number') {
+                            field.style.borderColor = '';
+                            const warningEl = document.getElementById('plate-warning');
+                            if (warningEl) warningEl.style.display = 'none';
+                        }
+                    }
+                });
+
+                // We already set fileNumberInput.value and localStorage above, so we are good.
             } catch (error) {
                 console.error('Error:', error);
                 alert('An error occurred. check console.');
@@ -2699,24 +2757,37 @@
         if (downloadTemplateBtn) {
             downloadTemplateBtn.addEventListener('click', async () => {
                 const form = document.getElementById('template-form');
-                const formData = new FormData(form);
 
                 try {
-                    const response = await fetch('/', { method: 'POST', body: formData });
-                    if (response.ok) {
-                        const blob = await response.blob();
-                        const url = window.URL.createObjectURL(blob);
-                        const fileNum = document.getElementById('file_number')?.value || '01';
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = parseInt(fileNum, 10) + '.pdf';
-                        document.body.appendChild(a);
-                        a.click();
-                        window.URL.revokeObjectURL(url);
-                        a.remove();
-                    } else {
-                        alert('Error downloading template PDF');
-                    }
+                    const fileNum = document.getElementById('file_number')?.value || '01';
+                    const desiredFilename = parseInt(fileNum, 10) + '.pdf';
+
+                    // Create hidden iframe
+                    const iframeName = 'download_template_iframe_' + Date.now();
+                    const iframe = document.createElement('iframe');
+                    iframe.name = iframeName;
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+
+                    // Temporarily modify form
+                    const originalTarget = form.target;
+
+                    // Add desired_filename
+                    const filenameInput = document.createElement('input');
+                    filenameInput.type = 'hidden';
+                    filenameInput.name = 'desired_filename';
+                    filenameInput.value = desiredFilename;
+                    form.appendChild(filenameInput);
+
+                    form.target = iframeName;
+                    form.submit();
+
+                    // Restore
+                    setTimeout(() => {
+                        form.target = originalTarget;
+                        filenameInput.remove();
+                        setTimeout(() => iframe.remove(), 5000);
+                    }, 100);
                 } catch (e) {
                     console.error('Download error:', e);
                     alert('Error: ' + e.message);

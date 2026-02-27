@@ -353,11 +353,12 @@ def generate_template():
         pdf_document.save(output_buffer, garbage=4, deflate=True, clean=True)
         output_buffer.seek(0)
         
-        filename = f'template_{template_type}_{plate_number or "output"}.pdf'
+        default_filename = f'template_{template_type}_{plate_number or "output"}.pdf'
+        desired_filename = request.form.get('desired_filename', default_filename)
         return send_file(
             output_buffer,
             as_attachment=True,
-            download_name=filename,
+            download_name=desired_filename,
             mimetype='application/pdf'
         )
     except Exception as e:
@@ -620,10 +621,11 @@ def index():
             template_doc.save(template_buffer, garbage=4, deflate=True, clean=True)
             template_buffer.seek(0)
             
+            tpl_desired_filename = request.form.get('desired_filename', 'template_output.pdf')
             return send_file(
                 template_buffer,
                 as_attachment=True,
-                download_name='template_output.pdf',
+                download_name=tpl_desired_filename,
                 mimetype='application/pdf'
             )
 
@@ -632,10 +634,11 @@ def index():
         pdf_document.save(output_buffer, garbage=4, deflate=True, clean=True)
         output_buffer.seek(0)
         
+        main_desired_filename = request.form.get('desired_filename', 'edited_output.pdf')
         return send_file(
             output_buffer,
             as_attachment=True,
-            download_name='edited_output.pdf',
+            download_name=main_desired_filename,
             mimetype='application/pdf'
         )
 
