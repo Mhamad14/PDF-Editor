@@ -2,12 +2,10 @@ from flask import Flask, render_template, request, send_file
 import fitz  # PyMuPDF
 import os
 import io
-
 import base64
-
-# ... (previous imports)
 import json
 import math
+from PIL import Image
 
 app = Flask(__name__)
 
@@ -20,6 +18,7 @@ def flatten_page_to_image(doc, page_index=0, dpi=300):
     with a new page containing only that image. This removes all text
     objects, fonts, and layered content — output looks identical to
     the original image-based PDF structure.
+    Also cleans background noise/off-white tints so whiteout boxes blend seamlessly.
     """
     page = doc[page_index]
     page_rect = page.rect
@@ -27,6 +26,17 @@ def flatten_page_to_image(doc, page_index=0, dpi=300):
     # Rasterize the full page at high DPI
     pix = page.get_pixmap(dpi=dpi, alpha=False)
     img_data = pix.tobytes("png")
+    
+    # Clean background noise so near-white pixels become pure #ffffff
+    try:
+        img = Image.open(io.BytesIO(img_data)).convert("RGB")
+        lut = [255 if i >= 230 else i for i in range(256)]
+        cleaned_img = img.point(lut * 3)
+        img_buffer = io.BytesIO()
+        cleaned_img.save(img_buffer, format="PNG")
+        img_data = img_buffer.getvalue()
+    except Exception as e:
+        print(f"Error cleaning background: {e}")
     
     # Delete the old page and insert a fresh one with same dimensions
     doc.delete_page(page_index)
@@ -422,9 +432,10 @@ def index():
             fontsize_top = float(request.form.get('main_top_fontsize', 14))
             fontsize_date = float(request.form.get('main_date_fontsize', 11))
             fontsize_vehicle = float(request.form.get('main_vehicle_fontsize', 11))
+            fontsize_forste = float(request.form.get('main_forste_fontsize', 11))
         except ValueError:
             # Basic fallback
-            fontsize_top, fontsize_date, fontsize_vehicle = 14, 11, 11
+            fontsize_top, fontsize_date, fontsize_vehicle, fontsize_forste = 14, 11, 11, 11
 
         if pdf_document and len(pdf_document) > 0:
             page = pdf_document[0]
@@ -432,18 +443,18 @@ def index():
             # Preserve original metadata to avoid detection
             original_metadata = pdf_document.metadata.copy() if pdf_document.metadata else {}
 
-            # Use Helvetica.ttf as requested
-            font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'Helvetica.ttf')
-            custom_color = (20/255, 20/255, 60/255)
+            # Use Times New Roman as requested
+            font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'times.ttf')
+            custom_color = (0, 0, 0)
             
             if os.path.exists(font_path):
                 custom_font = fitz.Font(fontfile=font_path)
             else:
-                custom_font = fitz.Font("helv")
+                custom_font = fitz.Font("tiro")  # Builtin Times-Roman fallback
 
-            # Color codes
-            color_name = (0x21/255, 0x21/255, 0x21/255)  # #212121 for Area 1 (Name)
-            color_body = (0x14/255, 0x14/255, 0x3c/255)  # #14143c for rest of body
+            # Color codes - Pure black (#000000) for all text fields
+            color_name = (0, 0, 0)  # #000000 Pure Black
+            color_body = (0, 0, 0)  # #000000 Pure Black for Marke, Model, and all body fields
 
             # Collect all text items
             main_text_items = []
@@ -464,12 +475,12 @@ def index():
 
             # Queue all fields
             queue_main_text(top_name, 'r1', fontsize_top, color_name, is_multiline=True)
-            queue_main_text(second_section, 'r2', fontsize_vehicle, color_body)
+            queue_main_text(second_section, 'r2', fontsize_date, color_body)
             queue_main_text(marke, 'r3', fontsize_vehicle, color_body)
             queue_main_text(model, 'r4', fontsize_vehicle, color_body)
             queue_main_text(stealnumber, 'r5', fontsize_vehicle, color_body)
             queue_main_text(art, 'r6', fontsize_vehicle, color_body)
-            queue_main_text(forste_gang, 'r7', fontsize_vehicle, color_body)
+            queue_main_text(forste_gang, 'r7', fontsize_forste, color_body)
             queue_main_text(plate_number, 'r8', fontsize_vehicle, color_body)
 
             # Add replacement text using TextWriter
