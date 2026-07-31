@@ -640,6 +640,10 @@ def index():
                 mimetype='application/pdf'
             )
 
+        # Handle signature PDF generation
+        if action == 'download_signature':
+            return generate_signature_pdf(request)
+
         # Save to buffer with full cleanup
         output_buffer = io.BytesIO()
         pdf_document.save(output_buffer, garbage=4, deflate=True, clean=True)
@@ -655,5 +659,337 @@ def index():
 
     return render_template('index.html')
 
+def generate_human_signature(name):
+    """Generate a realistic human pen signature from the first name"""
+    first_name = name.strip().split()[0] if name.strip() else 'Signature'
+    font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'caveat.ttf')
+    if not os.path.exists(font_path):
+        font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'dancing.ttf')
+    
+    from PIL import Image, ImageDraw, ImageFont
+    img = Image.new('RGBA', (450, 160), (255, 255, 255, 0))
+    draw = ImageDraw.Draw(img)
+    
+    try:
+        font = ImageFont.truetype(font_path, 64)
+    except Exception:
+        font = ImageFont.load_default()
+        
+    ink_color = (20, 35, 75, 240)  # Dark navy blue pen ink
+    draw.text((25, 30), first_name, font=font, fill=ink_color)
+    
+    # Draw natural pen flourish underline
+    try:
+        bbox = draw.textbbox((25, 30), first_name, font=font)
+        text_width = bbox[2] - bbox[0]
+        start_x = 30
+        end_x = start_x + text_width + 45
+        y_base = bbox[3] - 8
+        points = []
+        for x in range(int(start_x), int(end_x), 3):
+            t = (x - start_x) / (end_x - start_x)
+            y = y_base + math.sin(t * math.pi) * 14 + math.sin(t * 3 * math.pi) * 3
+            points.append((x, y))
+        if len(points) > 1:
+            draw.line(points, fill=ink_color, width=3)
+    except Exception as e:
+        print(f"Error drawing flourish: {e}")
+        
+    rotated = img.rotate(4, resample=Image.BICUBIC, expand=True)
+    return rotated
+
+def process_uploaded_signature(file_bytes, target_ink_color=(16, 30, 66)):
+    """
+    Advanced Signature Reconstruction Pipeline:
+    1. Upsamples image 2x for smooth crisp edges.
+    2. Local background illumination subtraction: isolates pen ink from paper color, watermarks & patterns.
+    3. Low-sensitivity thresholding + MORPH_CLOSE (7,7) & MORPH_DILATE (3,3): bridges all stroke gaps for 100% solid, connected pen ink.
+    4. Aspect-ratio and component filtering: eliminates horizontal scanner lines and isolated specks.
+    5. Gaussian anti-aliasing: smooths stroke outlines for clean, professional PDF rendering.
+    """
+    import cv2
+    import numpy as np
+    from PIL import Image
+
+    try:
+        if isinstance(file_bytes, (bytes, bytearray)):
+            nparr = np.frombuffer(file_bytes, np.uint8)
+            img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        elif isinstance(file_bytes, str):
+            img = cv2.imread(file_bytes)
+        else:
+            img = np.array(Image.open(io.BytesIO(file_bytes)).convert('RGB'))[:, :, ::-1]
+
+        if img is None:
+            raise ValueError("Could not decode image bytes")
+
+        # Scale up 2x for smooth crisp edges
+        h, w = img.shape[:2]
+        high_res_h, high_res_w = int(h * 2), int(w * 2)
+        img_large = cv2.resize(img, (high_res_w, high_res_h), interpolation=cv2.INTER_CUBIC)
+
+        # Grayscale
+        gray = cv2.cvtColor(img_large, cv2.COLOR_BGR2GRAY)
+
+        # 1. Local background subtraction (handles uneven paper illumination & paper tint)
+        bg_est = cv2.GaussianBlur(gray, (51, 51), 0)
+        diff = bg_est.astype(np.float32) - gray.astype(np.float32)
+        diff = np.clip(diff, 0, 255).astype(np.uint8)
+
+        # 2. Low-sensitivity thresholding to capture 100% of pen ink (even light pen loops)
+        otsu_val, _ = cv2.threshold(diff, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        thresh_val = max(otsu_val * 0.45, 5.0)
+        _, binary = cv2.threshold(diff, int(thresh_val), 255, cv2.THRESH_BINARY)
+
+        # 3. Morphological Close (7,7) & Dilate (3,3) to bridge any pixel gaps and render 100% solid, continuous pen strokes
+        kernel_close = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
+        closed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel_close)
+        
+        kernel_dilate = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
+        bold_strokes = cv2.dilate(closed, kernel_dilate, iterations=1)
+
+        # 4. Component Analysis & Aspect Ratio Filtering (removes horizontal scanner noise lines & specks)
+        num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(bold_strokes)
+        clean_mask = np.zeros_like(bold_strokes)
+
+        for i in range(1, num_labels):
+            area = stats[i, cv2.CC_STAT_AREA]
+            cw = stats[i, cv2.CC_STAT_WIDTH]
+            ch = stats[i, cv2.CC_STAT_HEIGHT]
+            cy = centroids[i][1]
+
+            aspect_ratio = cw / float(ch + 1e-5)
+            is_margin = (cy < high_res_h * 0.05) or (cy > high_res_h * 0.95)
+            is_scanner_line = (aspect_ratio > 7.0 and ch < 20) or (aspect_ratio < 0.15 and cw < 15)
+
+            if not is_margin and not is_scanner_line and (area >= 400 or (cw >= 80 and ch >= 80)):
+                clean_mask[labels == i] = 255
+
+        # 5. Smooth stroke boundaries with Gaussian blur for crisp anti-aliased digital ink
+        alpha = cv2.GaussianBlur(clean_mask, (3, 3), 0)
+
+        # 6. Build bold high quality RGBA output
+        rgba = np.zeros((high_res_h, high_res_w, 4), dtype=np.uint8)
+        rgba[:, :, 0] = target_ink_color[0]
+        rgba[:, :, 1] = target_ink_color[1]
+        rgba[:, :, 2] = target_ink_color[2]
+        rgba[:, :, 3] = alpha
+
+        pil_img = Image.fromarray(rgba, mode='RGBA')
+        bbox = pil_img.getbbox()
+        if bbox:
+            pil_img = pil_img.crop(bbox)
+        return pil_img
+    except Exception as e:
+        print(f"Advanced signature processing failed: {e}, falling back to PIL thresholding")
+        img = Image.open(io.BytesIO(file_bytes)).convert('RGBA')
+        gray = img.convert('L')
+        alpha = gray.point(lambda p: 255 if p < 200 else 0)
+        img.putalpha(alpha)
+        return img
+
+
+
+
+
+@app.route('/render_signature_template', methods=['POST'])
+def render_signature_template():
+    """Render signature_template.pdf preview for live canvas calibration"""
+    template_path = os.path.join(os.path.dirname(__file__), 'signature_template.pdf')
+    if not os.path.exists(template_path):
+        return 'signature_template.pdf not found', 404
+        
+    try:
+        pdf_document = fitz.open(template_path)
+        if len(pdf_document) > 0:
+            page = pdf_document[0]
+            pix = page.get_pixmap()
+            img_data = pix.tobytes("png")
+            img_b64 = base64.b64encode(img_data).decode('utf-8')
+            return {
+                'image': img_b64,
+                'width': page.rect.width,
+                'height': page.rect.height
+            }
+    except Exception as e:
+        return str(e), 500
+    return 'Error processing signature template PDF', 500
+
+def process_drawn_signature(base64_data, target_ink_color=(16, 30, 66)):
+    """
+    Process interactive drawn signature from canvas pad:
+    1. Decodes base64 canvas image.
+    2. Makes white background 100% transparent.
+    3. Recolors drawn pen ink strokes to deep navy (16, 30, 66).
+    4. Applies super-sampling anti-aliasing while keeping 100% solid unbroken lines.
+    """
+    import base64, io
+    import cv2
+    import numpy as np
+    from PIL import Image, ImageFilter
+    try:
+        if ',' in base64_data:
+            base64_data = base64_data.split(',')[1]
+        img_bytes = base64.b64decode(base64_data)
+        img = Image.open(io.BytesIO(img_bytes)).convert('RGBA')
+        
+        arr = np.array(img)
+        r, g, b, a = arr[:, :, 0], arr[:, :, 1], arr[:, :, 2], arr[:, :, 3]
+        
+        # Identify drawn stroke pixels (dark ink on white canvas)
+        is_background = (r > 240) & (g > 240) & (b > 240)
+        
+        # Create output RGBA array
+        out_arr = np.zeros_like(arr)
+        
+        # Set stroke color
+        out_arr[~is_background, 0] = target_ink_color[0]
+        out_arr[~is_background, 1] = target_ink_color[1]
+        out_arr[~is_background, 2] = target_ink_color[2]
+        out_arr[~is_background, 3] = a[~is_background]
+        
+        out_pil = Image.fromarray(out_arr, mode='RGBA')
+        
+        # Smooth stroke edges slightly for natural pen rendering
+        out_pil = out_pil.filter(ImageFilter.SMOOTH_MORE)
+        
+        bbox = out_pil.getbbox()
+        if bbox:
+            out_pil = out_pil.crop(bbox)
+        return out_pil
+    except Exception as e:
+        print(f"Error processing drawn signature pad: {e}")
+        return None
+
+def generate_signature_pdf(req):
+    """Generate Signature / Power of Attorney PDF with text overlay and signature"""
+    template_path = os.path.join(os.path.dirname(__file__), 'signature_template.pdf')
+    if not os.path.exists(template_path):
+        return 'Signature template file not found', 404
+        
+    sig_days = req.form.get('sig_days', '')
+    sig_start_date = req.form.get('sig_start_date', '')
+    sig_vin = req.form.get('sig_vin', '')
+    sig_full_name = req.form.get('sig_full_name', '')
+    sig_akr = req.form.get('sig_akr', '')
+    
+    # Bounding boxes and offsets for fields
+    sig_defaults = {
+        'sig_days': {'x0': 205, 'y0': 353, 'x1': 517, 'y1': 373, 'off_x': 0, 'off_y': -4},
+        'sig_start_date': {'x0': 205, 'y0': 378, 'x1': 515, 'y1': 400, 'off_x': 0, 'off_y': -3.5},
+        'sig_vin': {'x0': 146, 'y0': 447, 'x1': 484, 'y1': 469, 'off_x': 0, 'off_y': -3},
+        'sig_full_name': {'x0': 150, 'y0': 490, 'x1': 515, 'y1': 511, 'off_x': 0, 'off_y': -3},
+        'sig_akr': {'x0': 140, 'y0': 574, 'x1': 338, 'y1': 594, 'off_x': 0, 'off_y': -3},
+        'sig_signature': {'x0': 180, 'y0': 715, 'x1': 440, 'y1': 835, 'off_x': 0, 'off_y': 0}
+    }
+    
+    def get_sig_coords(prefix):
+        d = sig_defaults.get(prefix, {'x0': 0, 'y0': 0, 'x1': 100, 'y1': 50, 'off_x': 0, 'off_y': 0})
+        off_x_val = req.form.get(f'{prefix}_off_x', '').strip()
+        off_y_val = req.form.get(f'{prefix}_off_y', '').strip()
+        return {
+            'x0': float(req.form.get(f'{prefix}_x0', 0)) or d['x0'],
+            'y0': float(req.form.get(f'{prefix}_y0', 0)) or d['y0'],
+            'x1': float(req.form.get(f'{prefix}_x1', 0)) or d['x1'],
+            'y1': float(req.form.get(f'{prefix}_y1', 0)) or d['y1'],
+            'off_x': float(off_x_val) if off_x_val != '' else d['off_x'],
+            'off_y': float(off_y_val) if off_y_val != '' else d['off_y']
+        }
+        
+    coords = {k: get_sig_coords(k) for k in sig_defaults}
+    
+    try:
+        body_fontsize = float(req.form.get('sig_body_fontsize', 14))
+    except ValueError:
+        body_fontsize = 14
+
+    try:
+        pdf_document = fitz.open(template_path)
+        if len(pdf_document) == 0:
+            return 'Signature template PDF is empty', 500
+            
+        page = pdf_document[0]
+        original_metadata = pdf_document.metadata.copy() if pdf_document.metadata else {}
+        
+        font_path = os.path.join(os.path.dirname(__file__), 'fonts', 'times.ttf')
+        if os.path.exists(font_path):
+            times_font = fitz.Font(fontfile=font_path)
+        else:
+            times_font = fitz.Font("tiro")
+            
+        text_fields = [
+            (sig_days, coords['sig_days']),
+            (sig_start_date, coords['sig_start_date']),
+            (sig_vin, coords['sig_vin']),
+            (sig_full_name, coords['sig_full_name']),
+            (sig_akr, coords['sig_akr']),
+        ]
+        
+        for text, c in text_fields:
+            if text and text.strip():
+                rect = fitz.Rect(c['x0'], c['y0'], c['x1'], c['y1'])
+                page.draw_rect(rect, color=None, fill=(1, 1, 1))
+                tx = c['x0'] + 5 + c['off_x']
+                ty = c['y0'] + 5 + (body_fontsize * 0.8) + c['off_y']
+                tw = fitz.TextWriter(page.rect)
+                tw.append(fitz.Point(tx, ty), text, font=times_font, fontsize=body_fontsize)
+                tw.write_text(page, color=(0, 0, 0))
+
+        # Handle signature rendering (drawn pad -> uploaded photo -> auto-generated human signature)
+        sig_c = coords['sig_signature']
+        sig_rect = fitz.Rect(sig_c['x0'] + sig_c['off_x'], sig_c['y0'] + sig_c['off_y'], sig_c['x1'] + sig_c['off_x'], sig_c['y1'] + sig_c['off_y'])
+        
+        sig_img = None
+        
+        # 1. Check if user drew signature on pad
+        sig_drawn_data = req.form.get('sig_drawn_data', '').strip()
+        if sig_drawn_data:
+            try:
+                sig_img = process_drawn_signature(sig_drawn_data)
+            except Exception as e:
+                print(f"Drawn signature processing failed: {e}")
+                
+        # 2. Check if user uploaded a signature photo
+        if sig_img is None and 'sig_image' in req.files and req.files['sig_image'].filename != '':
+            try:
+                sig_img = process_uploaded_signature(req.files['sig_image'].read())
+            except Exception as e:
+                print(f"Uploaded signature processing failed: {e}")
+                
+        # 3. Fallback: Auto-generate human cursive pen signature from First Name
+        if sig_img is None:
+            sig_img = generate_human_signature(sig_full_name)
+            
+        # Draw signature image onto PDF page (with white background rect under signature box)
+        if sig_img:
+            page.draw_rect(sig_rect, color=None, fill=(1, 1, 1))
+            buf = io.BytesIO()
+            sig_img.save(buf, format='PNG')
+            page.insert_image(sig_rect, stream=buf.getvalue())
+            
+        flatten_page_to_image(pdf_document, page_index=0)
+        pdf_document.set_metadata(original_metadata)
+        
+        output_buffer = io.BytesIO()
+        pdf_document.save(output_buffer, garbage=4, deflate=True, clean=True)
+        output_buffer.seek(0)
+        
+        desired_filename = req.form.get('desired_filename', 'power_of_attorney.pdf')
+        return send_file(
+            output_buffer,
+            as_attachment=True,
+            download_name=desired_filename,
+            mimetype='application/pdf'
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return f'Error generating signature PDF: {str(e)}', 500
+
+@app.route('/generate_signature', methods=['POST'])
+def generate_signature_route():
+    return generate_signature_pdf(request)
+
 if __name__ == '__main__':
     app.run(debug=True)
+

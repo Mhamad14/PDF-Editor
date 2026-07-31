@@ -406,6 +406,7 @@
         <div class="tab-nav">
             <button type="button" class="tab-btn active" data-tab="main-pdf">📄 Main PDF</button>
             <button type="button" class="tab-btn" data-tab="template-pdf">📋 Template PDF</button>
+            <button type="button" class="tab-btn" data-tab="signature-pdf">✍️ Signature PDF</button>
         </div>
 
         <!-- Main PDF Tab Content -->
@@ -1287,6 +1288,209 @@
                 </div>
             </form>
         </div>
+
+        <!-- Signature / Power of Attorney PDF Tab Content -->
+        <div id="signature-pdf" class="tab-content">
+            <form id="signature-form" action="/generate_signature" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="action" value="download_signature">
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0; color: #a5b4fc; font-size: 1.1rem;">✍️ Power of Attorney (FULDMAGT)</h3>
+                    <button type="button" id="sync-main-to-sig-btn" class="save-btn" style="width: auto; padding: 6px 12px; font-size: 0.8rem; margin: 0;">🔄 Sync from Main PDF</button>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                    <div class="form-group" style="margin: 0;">
+                        <label for="sig_days">Number of Days</label>
+                        <input type="text" name="sig_days" id="sig_days" placeholder="e.g. 5">
+                    </div>
+                    <div class="form-group" style="margin: 0;">
+                        <label for="sig_start_date">Starting Date</label>
+                        <input type="text" name="sig_start_date" id="sig_start_date" placeholder="e.g. 01-08-2026">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="sig_vin">VIN / reg.nr</label>
+                    <input type="text" name="sig_vin" id="sig_vin" placeholder="e.g. YS2S4X20005639312">
+                </div>
+
+                <div class="form-group">
+                    <label for="sig_full_name">Full Name</label>
+                    <input type="text" name="sig_full_name" id="sig_full_name" placeholder="e.g. Mhamad Aras">
+                </div>
+
+
+
+                <div class="form-group">
+                    <label for="sig_akr">AKR</label>
+                    <input type="text" name="sig_akr" id="sig_akr" placeholder="e.g. 44994054">
+                </div>
+
+                <!-- Interactive Signature Pad & Upload Section -->
+                <div style="padding: 1.25rem; background: rgba(255, 255, 255, 0.05); border-radius: 12px; border: 1px dashed rgba(129, 140, 248, 0.4); margin-bottom: 1rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <label style="font-weight: 600; color: #818cf8; margin: 0; display: flex; align-items: center; gap: 6px;">✒️ Interactive Signature Options</label>
+                        <button type="button" id="clear-sig-pad-btn" class="save-btn" style="width: auto; padding: 4px 10px; font-size: 0.8rem; background: #ef4444 !important; margin: 0;">🗑️ Clear Pad</button>
+                    </div>
+
+                    <!-- Interactive Drawing Canvas (Enlarged 900x280) -->
+                    <div style="margin-bottom: 1rem; text-align: center;">
+                        <p style="font-size: 0.85rem; color: #a5b4fc; margin: 0 0 0.5rem 0;">✍️ Draw your signature directly below using mouse, touch, or stylus:</p>
+                        <canvas id="signaturePad" width="900" height="280" style="background: #ffffff; border: 2px solid #818cf8; border-radius: 12px; cursor: crosshair; touch-action: none; max-width: 100%; min-height: 240px; box-shadow: 0 4px 18px rgba(0,0,0,0.35);"></canvas>
+                        <input type="hidden" name="sig_drawn_data" id="sig_drawn_data">
+                    </div>
+
+                    <!-- File Upload alternative -->
+                    <div style="padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.1);">
+                        <label for="sig_image" style="font-size: 0.85rem; color: #a5b4fc; font-weight: 600; margin-bottom: 0.25rem; display: block;">📁 Or Upload Signature Photo</label>
+                        <input type="file" name="sig_image" id="sig_image" accept="image/*">
+                        <small style="color: #94a3b8; font-size: 0.75rem; display: block; margin-top: 4px;">💡 If drawing pad and photo are left empty, a realistic cursive signature will be auto-generated from your First Name.</small>
+                    </div>
+                </div>
+
+                <!-- Prominent Download Button Directly After Signature Box -->
+                <div style="margin-bottom: 1.5rem; text-align: center;">
+                    <button type="button" id="download-sig-btn-primary" class="save-btn download-sig-btn-action" style="padding: 14px 28px; font-size: 1.1rem; width: 100%; background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);">📥 Download Signature PDF</button>
+                </div>
+
+                <!-- Live Calibration Preview Button & Container -->
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <button type="button" id="load-sig-preview-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">👁️ Show Live Calibration Preview</button>
+                </div>
+
+                <div id="sig-preview-container" style="display: none; background: rgba(0, 0, 0, 0.2); padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem;">
+                    <p style="font-size: 0.85rem; color: #a5b4fc; margin-top: 0; margin-bottom: 0.5rem;"><strong>Calibration Mode:</strong> Click and drag on canvas to draw rectangle for selected field.</p>
+                    
+                    <!-- Calibration Field Selector Radios -->
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 0.75rem; font-size: 0.8rem;">
+                        <label><input type="radio" name="sig_calib_mode" value="sig_days" checked> Days</label>
+                        <label><input type="radio" name="sig_calib_mode" value="sig_start_date"> Start Date</label>
+                        <label><input type="radio" name="sig_calib_mode" value="sig_vin"> VIN</label>
+                        <label><input type="radio" name="sig_calib_mode" value="sig_full_name"> Full Name</label>
+                        <label><input type="radio" name="sig_calib_mode" value="sig_akr"> AKR</label>
+                        <label><input type="radio" name="sig_calib_mode" value="sig_signature"> Signature</label>
+                    </div>
+
+                    <div style="width: 100%; overflow-x: auto; text-align: center;">
+                        <canvas id="sigPreviewCanvas" style="border: 1px solid rgba(255,255,255,0.2); max-width: 100%; border-radius: 6px; cursor: crosshair;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Font Sizes & Calibration Details -->
+                <details style="margin-bottom: 1.5rem; background: rgba(0,0,0,0.15); padding: 1rem; border-radius: 10px; border: 1px solid var(--glass-border);">
+                    <summary style="cursor: pointer; color: #a5b4fc; font-weight: 600;">⚙️ Font & Fine Calibration Settings</summary>
+
+                    <div style="margin-top: 1rem; display: flex; gap: 1rem; align-items: center;">
+                        <label style="font-size: 0.85rem; flex: 1;">Body Text Font Size:
+                            <input type="number" name="sig_body_fontsize" id="sig_body_fontsize" value="14" style="width: 80px; display: inline-block; margin-left: 0.5rem;">
+                        </label>
+                    </div>
+
+                    <!-- Offsets & Coords for Days -->
+                    <div style="margin-top: 1rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Number of Days</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="sig_days_x0" id="sig_days_x0" value="205" style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="sig_days_y0" id="sig_days_y0" value="353" style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="sig_days_x1" id="sig_days_x1" value="517" style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="sig_days_y1" id="sig_days_y1" value="373" style="width: 100%;"></label>
+                        </div>
+                        <div style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="sig_days_off_x" id="sig_days_off_x" value="0" placeholder="+X" style="width: 60px;">
+                            <input type="number" name="sig_days_off_y" id="sig_days_off_y" value="-4" step="0.5" placeholder="+Y" style="width: 60px;">
+                        </div>
+                    </div>
+
+                    <!-- Starting Date -->
+                    <div style="margin-top: 0.75rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Starting Date</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="sig_start_date_x0" id="sig_start_date_x0" value="205" style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="sig_start_date_y0" id="sig_start_date_y0" value="378" style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="sig_start_date_x1" id="sig_start_date_x1" value="515" style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="sig_start_date_y1" id="sig_start_date_y1" value="400" style="width: 100%;"></label>
+                        </div>
+                        <div style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="sig_start_date_off_x" id="sig_start_date_off_x" value="0" placeholder="+X" style="width: 60px;">
+                            <input type="number" name="sig_start_date_off_y" id="sig_start_date_off_y" value="-3.5" step="0.5" placeholder="+Y" style="width: 60px;">
+                        </div>
+                    </div>
+
+                    <!-- VIN -->
+                    <div style="margin-top: 0.75rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">VIN / reg.nr</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="sig_vin_x0" id="sig_vin_x0" value="146" style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="sig_vin_y0" id="sig_vin_y0" value="447" style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="sig_vin_x1" id="sig_vin_x1" value="484" style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="sig_vin_y1" id="sig_vin_y1" value="469" style="width: 100%;"></label>
+                        </div>
+                        <div style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="sig_vin_off_x" id="sig_vin_off_x" value="0" placeholder="+X" style="width: 60px;">
+                            <input type="number" name="sig_vin_off_y" id="sig_vin_off_y" value="-3" step="0.5" placeholder="+Y" style="width: 60px;">
+                        </div>
+                    </div>
+
+                    <!-- Full Name -->
+                    <div style="margin-top: 0.75rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Full Name</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="sig_full_name_x0" id="sig_full_name_x0" value="150" style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="sig_full_name_y0" id="sig_full_name_y0" value="490" style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="sig_full_name_x1" id="sig_full_name_x1" value="515" style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="sig_full_name_y1" id="sig_full_name_y1" value="511" style="width: 100%;"></label>
+                        </div>
+                        <div style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="sig_full_name_off_x" id="sig_full_name_off_x" value="0" placeholder="+X" style="width: 60px;">
+                            <input type="number" name="sig_full_name_off_y" id="sig_full_name_off_y" value="-3" step="0.5" placeholder="+Y" style="width: 60px;">
+                        </div>
+                    </div>
+
+                    <!-- AKR -->
+                    <div style="margin-top: 0.75rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">AKR</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="sig_akr_x0" id="sig_akr_x0" value="140" style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="sig_akr_y0" id="sig_akr_y0" value="574" style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="sig_akr_x1" id="sig_akr_x1" value="338" style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="sig_akr_y1" id="sig_akr_y1" value="594" style="width: 100%;"></label>
+                        </div>
+                        <div style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="sig_akr_off_x" id="sig_akr_off_x" value="0" placeholder="+X" style="width: 60px;">
+                            <input type="number" name="sig_akr_off_y" id="sig_akr_off_y" value="-3" step="0.5" placeholder="+Y" style="width: 60px;">
+                        </div>
+                    </div>
+
+                    <!-- Signature Area -->
+                    <div style="margin-top: 0.75rem;">
+                        <h5 style="margin: 0.5rem 0; color: #fff; font-size: 0.85rem;">Signature Placement Box</h5>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; font-size: 0.8rem;">
+                            <label>X0 <input type="number" name="sig_signature_x0" id="sig_signature_x0" value="180" style="width: 100%;"></label>
+                            <label>Y0 <input type="number" name="sig_signature_y0" id="sig_signature_y0" value="715" style="width: 100%;"></label>
+                            <label>X1 <input type="number" name="sig_signature_x1" id="sig_signature_x1" value="440" style="width: 100%;"></label>
+                            <label>Y1 <input type="number" name="sig_signature_y1" id="sig_signature_y1" value="835" style="width: 100%;"></label>
+                        </div>
+                        <div style="margin-top: 0.3rem; display: flex; gap: 10px; align-items: center; font-size: 0.8rem;">
+                            <span>Offset:</span>
+                            <input type="number" name="sig_signature_off_x" id="sig_signature_off_x" value="0" placeholder="+X" style="width: 60px;">
+                            <input type="number" name="sig_signature_off_y" id="sig_signature_off_y" value="0" placeholder="+Y" style="width: 60px;">
+                        </div>
+                    </div>
+
+                </details>
+
+                <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="button" id="save-sig-settings-btn" class="save-btn">💾 Save Settings</button>
+                    <button type="button" id="download-sig-btn">📥 Download Signature PDF</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script>
@@ -1341,6 +1545,23 @@
 
         function loadFromStorage() {
             inputs.forEach(id => {
+                const val = localStorage.getItem('pdf_editor_' + id);
+                if (val !== null) {
+                    const el = document.getElementById(id);
+                    if (el) el.value = val;
+                }
+            });
+            const sigInputIds = [
+                'sig_body_fontsize',
+                'sig_days_x0', 'sig_days_y0', 'sig_days_x1', 'sig_days_y1', 'sig_days_off_x', 'sig_days_off_y',
+                'sig_start_date_x0', 'sig_start_date_y0', 'sig_start_date_x1', 'sig_start_date_y1', 'sig_start_date_off_x', 'sig_start_date_off_y',
+                'sig_vin_x0', 'sig_vin_y0', 'sig_vin_x1', 'sig_vin_y1', 'sig_vin_off_x', 'sig_vin_off_y',
+                'sig_full_name_x0', 'sig_full_name_y0', 'sig_full_name_x1', 'sig_full_name_y1', 'sig_full_name_off_x', 'sig_full_name_off_y',
+                'sig_full_address_x0', 'sig_full_address_y0', 'sig_full_address_x1', 'sig_full_address_y1', 'sig_full_address_off_x', 'sig_full_address_off_y',
+                'sig_akr_x0', 'sig_akr_y0', 'sig_akr_x1', 'sig_akr_y1', 'sig_akr_off_x', 'sig_akr_off_y',
+                'sig_signature_x0', 'sig_signature_y0', 'sig_signature_x1', 'sig_signature_y1', 'sig_signature_off_x', 'sig_signature_off_y'
+            ];
+            sigInputIds.forEach(id => {
                 const val = localStorage.getItem('pdf_editor_' + id);
                 if (val !== null) {
                     const el = document.getElementById(id);
@@ -2807,6 +3028,369 @@
                     alert('Error: ' + e.message);
                 }
             });
+        }
+
+        // ======= SIGNATURE PDF LOGIC =======
+        const syncMainToSigBtn = document.getElementById('sync-main-to-sig-btn');
+        if (syncMainToSigBtn) {
+            syncMainToSigBtn.addEventListener('click', () => {
+                const vinVal = document.getElementById('stealnumber')?.value || '';
+                const nameVal = document.getElementById('top_name')?.value || '';
+                if (vinVal) document.getElementById('sig_vin').value = vinVal;
+                if (nameVal) {
+                    const firstLine = nameVal.split('\n')[0].trim();
+                    document.getElementById('sig_full_name').value = firstLine;
+                }
+                alert('Synced values from Main PDF!');
+            });
+        }
+
+        const loadSigPreviewBtn = document.getElementById('load-sig-preview-btn');
+        const sigPreviewContainer = document.getElementById('sig-preview-container');
+        const sigPreviewCanvas = document.getElementById('sigPreviewCanvas');
+        const sigPreviewCtx = sigPreviewCanvas ? sigPreviewCanvas.getContext('2d') : null;
+
+        let sigTemplateImage = null;
+        let sigScaleRatio = 1;
+        let sigDrawing = false;
+        let sigStartX = 0, sigStartY = 0;
+
+        function drawSigPreview() {
+            if (!sigPreviewCanvas || !sigPreviewCtx || !sigTemplateImage) return;
+
+            sigPreviewCtx.clearRect(0, 0, sigPreviewCanvas.width, sigPreviewCanvas.height);
+            sigPreviewCtx.drawImage(sigTemplateImage, 0, 0, sigPreviewCanvas.width, sigPreviewCanvas.height);
+
+            const bodyFont = parseFloat(document.getElementById('sig_body_fontsize')?.value || 12);
+            const scaledBodyFont = bodyFont / sigScaleRatio;
+
+            sigPreviewCtx.textBaseline = 'top';
+
+            const fields = [
+                { id: 'sig_days', prefix: 'sig_days' },
+                { id: 'sig_start_date', prefix: 'sig_start_date' },
+                { id: 'sig_vin', prefix: 'sig_vin' },
+                { id: 'sig_full_name', prefix: 'sig_full_name' },
+                { id: 'sig_akr', prefix: 'sig_akr' },
+                { id: '', prefix: 'sig_signature', isSig: true }
+            ];
+
+            fields.forEach(f => {
+                const x0 = parseFloat(document.getElementById(f.prefix + '_x0')?.value || 0) / sigScaleRatio;
+                const y0 = parseFloat(document.getElementById(f.prefix + '_y0')?.value || 0) / sigScaleRatio;
+                const x1 = parseFloat(document.getElementById(f.prefix + '_x1')?.value || 0) / sigScaleRatio;
+                const y1 = parseFloat(document.getElementById(f.prefix + '_y1')?.value || 0) / sigScaleRatio;
+                const offX = parseFloat(document.getElementById(f.prefix + '_off_x')?.value || 0) / sigScaleRatio;
+                const offY = parseFloat(document.getElementById(f.prefix + '_off_y')?.value || 0) / sigScaleRatio;
+
+                if (x0 === 0 && x1 === 0) return;
+
+                sigPreviewCtx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                sigPreviewCtx.fillRect(x0, y0, x1 - x0, y1 - y0);
+
+                sigPreviewCtx.strokeStyle = 'rgba(79, 70, 229, 0.5)';
+                sigPreviewCtx.lineWidth = 1;
+                sigPreviewCtx.strokeRect(x0, y0, x1 - x0, y1 - y0);
+
+                if (f.isSig) {
+                    sigPreviewCtx.fillStyle = '#1e3a8a';
+                    sigPreviewCtx.font = `italic bold ${scaledBodyFont * 1.5}px "Caveat", "Dancing Script", cursive, sans-serif`;
+                    const nameText = document.getElementById('sig_full_name')?.value || 'Mhamad';
+                    const firstName = nameText.trim().split(/\s+/)[0] || 'Signature';
+                    sigPreviewCtx.fillText(firstName, x0 + 5 + offX, y0 + 5 + offY);
+                } else if (f.id) {
+                    const text = document.getElementById(f.id)?.value || '';
+                    if (text) {
+                        sigPreviewCtx.fillStyle = '#000000';
+                        sigPreviewCtx.font = `${scaledBodyFont}px "Times New Roman", sans-serif`;
+                        sigPreviewCtx.fillText(text, x0 + 5 + offX, y0 + 5 + offY);
+                    }
+                }
+            });
+        }
+
+        async function loadSigPreview() {
+            try {
+                const response = await fetch('/render_signature_template', { method: 'POST' });
+                if (!response.ok) throw new Error(await response.text());
+                const data = await response.json();
+                if (data.image) {
+                    sigPreviewContainer.style.display = 'block';
+                    sigTemplateImage = new Image();
+                    sigTemplateImage.onload = () => {
+                        const containerWidth = sigPreviewCanvas.parentElement.clientWidth - 32 || 600;
+                        sigScaleRatio = data.width / containerWidth;
+                        sigPreviewCanvas.width = containerWidth;
+                        sigPreviewCanvas.height = data.height / sigScaleRatio;
+                        drawSigPreview();
+                    };
+                    sigTemplateImage.src = 'data:image/png;base64,' + data.image;
+                }
+            } catch (e) {
+                console.error('Error loading signature template preview:', e);
+                alert('Error loading signature preview: ' + e.message);
+            }
+        }
+
+        if (loadSigPreviewBtn) {
+            loadSigPreviewBtn.addEventListener('click', loadSigPreview);
+        }
+
+        // Canvas drag-select calibration
+        if (sigPreviewCanvas) {
+            sigPreviewCanvas.addEventListener('mousedown', (e) => {
+                if (!sigTemplateImage) return;
+                sigDrawing = true;
+                const rect = sigPreviewCanvas.getBoundingClientRect();
+                sigStartX = e.clientX - rect.left;
+                sigStartY = e.clientY - rect.top;
+            });
+
+            sigPreviewCanvas.addEventListener('mousemove', (e) => {
+                if (!sigDrawing || !sigTemplateImage) return;
+                const rect = sigPreviewCanvas.getBoundingClientRect();
+                const currentX = e.clientX - rect.left;
+                const currentY = e.clientY - rect.top;
+
+                drawSigPreview();
+
+                sigPreviewCtx.fillStyle = 'rgba(16, 185, 129, 0.3)';
+                sigPreviewCtx.strokeStyle = '#10b981';
+                sigPreviewCtx.lineWidth = 2;
+                const x = Math.min(sigStartX, currentX);
+                const y = Math.min(sigStartY, currentY);
+                const w = Math.abs(currentX - sigStartX);
+                const h = Math.abs(currentY - sigStartY);
+                sigPreviewCtx.fillRect(x, y, w, h);
+                sigPreviewCtx.strokeRect(x, y, w, h);
+            });
+
+            sigPreviewCanvas.addEventListener('mouseup', (e) => {
+                if (!sigDrawing || !sigTemplateImage) return;
+                sigDrawing = false;
+                const rect = sigPreviewCanvas.getBoundingClientRect();
+                const endX = e.clientX - rect.left;
+                const endY = e.clientY - rect.top;
+
+                const x0 = Math.round(Math.min(sigStartX, endX) * sigScaleRatio);
+                const y0 = Math.round(Math.min(sigStartY, endY) * sigScaleRatio);
+                const x1 = Math.round(Math.max(sigStartX, endX) * sigScaleRatio);
+                const y1 = Math.round(Math.max(sigStartY, endY) * sigScaleRatio);
+
+                const mode = document.querySelector('input[name="sig_calib_mode"]:checked')?.value || 'sig_days';
+                if (mode) {
+                    document.getElementById(mode + '_x0').value = x0;
+                    document.getElementById(mode + '_y0').value = y0;
+                    document.getElementById(mode + '_x1').value = x1;
+                    document.getElementById(mode + '_y1').value = y1;
+                }
+
+                drawSigPreview();
+            });
+        }
+
+        // Add input listeners for real-time live preview updates
+        ['sig_days', 'sig_start_date', 'sig_vin', 'sig_full_name', 'sig_akr', 'sig_body_fontsize',
+         'sig_days_x0', 'sig_days_y0', 'sig_days_x1', 'sig_days_y1', 'sig_days_off_x', 'sig_days_off_y',
+         'sig_start_date_x0', 'sig_start_date_y0', 'sig_start_date_x1', 'sig_start_date_y1', 'sig_start_date_off_x', 'sig_start_date_off_y',
+         'sig_vin_x0', 'sig_vin_y0', 'sig_vin_x1', 'sig_vin_y1', 'sig_vin_off_x', 'sig_vin_off_y',
+         'sig_full_name_x0', 'sig_full_name_y0', 'sig_full_name_x1', 'sig_full_name_y1', 'sig_full_name_off_x', 'sig_full_name_off_y',
+         'sig_akr_x0', 'sig_akr_y0', 'sig_akr_x1', 'sig_akr_y1', 'sig_akr_off_x', 'sig_akr_off_y',
+         'sig_signature_x0', 'sig_signature_y0', 'sig_signature_x1', 'sig_signature_y1', 'sig_signature_off_x', 'sig_signature_off_y'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', drawSigPreview);
+        });
+
+        // Save settings button
+        const saveSigSettingsBtn = document.getElementById('save-sig-settings-btn');
+        if (saveSigSettingsBtn) {
+            saveSigSettingsBtn.addEventListener('click', () => {
+                const sigInputIds = [
+                    'sig_body_fontsize',
+                    'sig_days_x0', 'sig_days_y0', 'sig_days_x1', 'sig_days_y1', 'sig_days_off_x', 'sig_days_off_y',
+                    'sig_start_date_x0', 'sig_start_date_y0', 'sig_start_date_x1', 'sig_start_date_y1', 'sig_start_date_off_x', 'sig_start_date_off_y',
+                    'sig_vin_x0', 'sig_vin_y0', 'sig_vin_x1', 'sig_vin_y1', 'sig_vin_off_x', 'sig_vin_off_y',
+                    'sig_full_name_x0', 'sig_full_name_y0', 'sig_full_name_x1', 'sig_full_name_y1', 'sig_full_name_off_x', 'sig_full_name_off_y',
+                    'sig_akr_x0', 'sig_akr_y0', 'sig_akr_x1', 'sig_akr_y1', 'sig_akr_off_x', 'sig_akr_off_y',
+                    'sig_signature_x0', 'sig_signature_y0', 'sig_signature_x1', 'sig_signature_y1', 'sig_signature_off_x', 'sig_signature_off_y'
+                ];
+                sigInputIds.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) localStorage.setItem('pdf_editor_' + id, el.value);
+                });
+                alert('Signature PDF settings saved!');
+            });
+        }
+
+        // Download Signature PDF Buttons Handler
+        const triggerSigDownload = async () => {
+            const form = document.getElementById('signature-form');
+            try {
+                const fileNum = document.getElementById('file_number')?.value || '01';
+                let desiredFilename = parseInt(fileNum, 10) + '_power_of_attorney.pdf';
+
+                const formData = new FormData(form);
+                formData.append('desired_filename', desiredFilename);
+
+                const response = await fetch('/generate_signature', { method: 'POST', body: formData });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+                    const url = window.URL.createObjectURL(pdfBlob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = desiredFilename;
+                    document.body.appendChild(a);
+                    a.click();
+                    setTimeout(() => {
+                        window.URL.revokeObjectURL(url);
+                        a.remove();
+                    }, 1000);
+                } else {
+                    alert('Error generating Signature PDF');
+                }
+            } catch (e) {
+                console.error('Signature download error:', e);
+                alert('Error downloading Signature PDF: ' + e.message);
+            }
+        };
+
+        // ===== SIGNATURE PDF TAB SMART PASTE =====
+        ['sig_days', 'sig_start_date', 'sig_vin', 'sig_full_name', 'sig_akr'].forEach(fieldId => {
+            const inputEl = document.getElementById(fieldId);
+            if (inputEl) {
+                inputEl.addEventListener('paste', (e) => {
+                    const pasteData = (e.clipboardData || window.clipboardData).getData('text');
+                    if (!pasteData) return;
+
+                    const lines = pasteData.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+                    if (lines.length >= 2) {
+                        e.preventDefault(); // Stop single-field paste
+
+                        // Line 1: Number of Days (e.g. "1 day" -> "1")
+                        let daysVal = lines[0];
+                        const dayNumMatch = daysVal.match(/(\d+)/);
+                        if (dayNumMatch) daysVal = dayNumMatch[1];
+                        const sigDaysEl = document.getElementById('sig_days');
+                        if (sigDaysEl) sigDaysEl.value = daysVal;
+
+                        // Line 2: Starting Date (e.g. "31-07-2026")
+                        if (lines.length > 1) {
+                            let dateVal = lines[1];
+                            const dateMatch = dateVal.match(/\d{2}[-.\/]\d{2}[-.\/]\d{4}/);
+                            if (dateMatch) dateVal = dateMatch[0];
+                            const sigDateEl = document.getElementById('sig_start_date');
+                            if (sigDateEl) sigDateEl.value = dateVal;
+                        }
+
+                        // Line 3: VIN / reg.nr (e.g. "MERCEDES-BENZ - WDB96342210137269 Lastbil")
+                        if (lines.length > 2) {
+                            let vinVal = lines[2];
+                            const vinMatch = vinVal.match(/\b([A-HJ-NPR-Z0-9]{17})\b/i);
+                            if (vinMatch) {
+                                vinVal = vinMatch[1].toUpperCase();
+                            }
+                            const sigVinEl = document.getElementById('sig_vin');
+                            if (sigVinEl) sigVinEl.value = vinVal;
+                        }
+
+                        // Line 4: Full Name (e.g. "Donier Matkarimov")
+                        if (lines.length > 3) {
+                            const sigNameEl = document.getElementById('sig_full_name');
+                            if (sigNameEl) sigNameEl.value = lines[3];
+                        }
+
+                        // Line 5: AKR (e.g. "900409960")
+                        if (lines.length > 4) {
+                            let akrVal = lines[4];
+                            const akrMatch = akrVal.match(/(\d+)/);
+                            if (akrMatch) akrVal = akrMatch[1];
+                            const sigAkrEl = document.getElementById('sig_akr');
+                            if (sigAkrEl) sigAkrEl.value = akrVal;
+                        }
+
+                        // Refresh live preview & inputs
+                        ['sig_days', 'sig_start_date', 'sig_vin', 'sig_full_name', 'sig_akr'].forEach(id => {
+                            const el = document.getElementById(id);
+                            if (el) el.dispatchEvent(new Event('input'));
+                        });
+                    }
+                });
+            }
+        });
+
+        // Signature Pad Continuous Smooth Pen Drawing Logic
+        const sigPad = document.getElementById('signaturePad');
+        if (sigPad) {
+            const ctx = sigPad.getContext('2d');
+            let isPadDrawing = false;
+            let lastX = 0, lastY = 0;
+
+            function getPadPos(e) {
+                const rect = sigPad.getBoundingClientRect();
+                const clientX = e.touches && e.touches.length > 0 ? e.touches[0].clientX : e.clientX;
+                const clientY = e.touches && e.touches.length > 0 ? e.touches[0].clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (sigPad.width / rect.width),
+                    y: (clientY - rect.top) * (sigPad.height / rect.height)
+                };
+            }
+
+            function startPadDrawing(e) {
+                isPadDrawing = true;
+                const pos = getPadPos(e);
+                lastX = pos.x;
+                lastY = pos.y;
+
+                ctx.strokeStyle = '#122046'; // Ballpoint pen navy ink
+                ctx.fillStyle = '#122046';
+                ctx.lineWidth = 3.2;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+            }
+
+            function padDraw(e) {
+                if (!isPadDrawing) return;
+                if (e.cancelable) e.preventDefault();
+                const pos = getPadPos(e);
+
+                const midX = (lastX + pos.x) / 2;
+                const midY = (lastY + pos.y) / 2;
+                ctx.quadraticCurveTo(lastX, lastY, midX, midY);
+                ctx.stroke();
+
+                lastX = pos.x;
+                lastY = pos.y;
+
+                document.getElementById('sig_drawn_data').value = sigPad.toDataURL();
+            }
+
+            function stopPadDrawing() {
+                if (!isPadDrawing) return;
+                isPadDrawing = false;
+                document.getElementById('sig_drawn_data').value = sigPad.toDataURL();
+            }
+
+            sigPad.addEventListener('mousedown', startPadDrawing);
+            sigPad.addEventListener('mousemove', padDraw);
+            sigPad.addEventListener('mouseup', stopPadDrawing);
+            sigPad.addEventListener('mouseleave', stopPadDrawing);
+
+            sigPad.addEventListener('touchstart', startPadDrawing, { passive: false });
+            sigPad.addEventListener('touchmove', padDraw, { passive: false });
+            sigPad.addEventListener('touchend', stopPadDrawing);
+
+            const clearPadBtn = document.getElementById('clear-sig-pad-btn');
+            if (clearPadBtn) {
+                clearPadBtn.addEventListener('click', () => {
+                    ctx.clearRect(0, 0, sigPad.width, sigPad.height);
+                    document.getElementById('sig_drawn_data').value = '';
+                });
+            }
         }
     </script>
 </body>
