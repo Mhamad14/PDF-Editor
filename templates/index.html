@@ -1487,7 +1487,7 @@
 
                 <div class="form-buttons" style="display: flex; gap: 1rem; margin-top: 1rem;">
                     <button type="button" id="save-sig-settings-btn" class="save-btn">💾 Save Settings</button>
-                    <button type="button" id="download-sig-btn">📥 Download Signature PDF</button>
+                    <button type="button" id="download-sig-btn" class="download-sig-btn-action">📥 Download Signature PDF</button>
                 </div>
             </form>
         </div>
@@ -3222,37 +3222,80 @@
             });
         }
 
-        // Download Signature PDF Buttons Handler
-        const triggerSigDownload = async () => {
+        // Download Signature PDF Buttons Handler (Mobile Safari & Android Compatible)
+        const triggerSigDownload = async (e) => {
+            if (e && e.preventDefault) e.preventDefault();
+
             const form = document.getElementById('signature-form');
+            const sigPad = document.getElementById('signaturePad');
+            if (sigPad) {
+                const drawnDataInput = document.getElementById('sig_drawn_data');
+                try {
+                    const ctx = sigPad.getContext('2d');
+                    const pixelData = ctx.getImageData(0, 0, sigPad.width, sigPad.height).data;
+                    let isBlank = true;
+                    for (let i = 3; i < pixelData.length; i += 4) {
+                        if (pixelData[i] > 0) {
+                            isBlank = false;
+                            break;
+                        }
+                    }
+                    if (!isBlank && drawnDataInput) {
+                        drawnDataInput.value = sigPad.toDataURL('image/png');
+                    }
+                } catch (err) {
+                    console.warn('Canvas check error:', err);
+                }
+            }
+
             try {
                 const fileNum = document.getElementById('file_number')?.value || '01';
-                let desiredFilename = parseInt(fileNum, 10) + '_power_of_attorney.pdf';
+                let mainNumericPart = parseInt(fileNum, 10);
+                let desiredFilename = (isNaN(mainNumericPart) ? '01' : mainNumericPart) + '_power_of_attorney.pdf';
 
                 const formData = new FormData(form);
-                formData.append('desired_filename', desiredFilename);
+                formData.set('desired_filename', desiredFilename);
+                formData.set('action', 'download_signature');
 
                 const response = await fetch('/generate_signature', { method: 'POST', body: formData });
                 if (response.ok) {
                     const blob = await response.blob();
                     const pdfBlob = new Blob([blob], { type: 'application/pdf' });
+
+                    if (window.navigator && window.navigator.msSaveOrOpenBlob) {
+                        window.navigator.msSaveOrOpenBlob(pdfBlob, desiredFilename);
+                        return;
+                    }
+
                     const url = window.URL.createObjectURL(pdfBlob);
+                    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
                     const a = document.createElement('a');
                     a.style.display = 'none';
                     a.href = url;
                     a.download = desiredFilename;
+                    a.target = '_blank';
+                    a.rel = 'noopener';
                     document.body.appendChild(a);
                     a.click();
+
+                    if (isMobile) {
+                        // Fallback for mobile WebKit / Android browsers
+                        setTimeout(() => {
+                            window.location.href = url;
+                        }, 150);
+                    }
+
                     setTimeout(() => {
                         window.URL.revokeObjectURL(url);
                         a.remove();
-                    }, 1000);
+                    }, 3000);
                 } else {
                     alert('Error generating Signature PDF');
                 }
-            } catch (e) {
-                console.error('Signature download error:', e);
-                alert('Error downloading Signature PDF: ' + e.message);
+            } catch (err) {
+                console.error('Signature download error:', err);
+                alert('Error downloading Signature PDF: ' + err.message);
             }
         };
 
